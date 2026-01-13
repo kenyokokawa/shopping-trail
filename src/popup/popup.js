@@ -26,7 +26,7 @@ async function loadRecentProducts() {
   }
 
   container.innerHTML = products.map(product => `
-    <a href="${escapeHtml(product.url)}" class="product-item" target="_blank">
+    <div class="product-item" data-url="${escapeHtml(product.url)}" data-id="${escapeHtml(product.id)}">
       <img
         class="product-image"
         src="${escapeHtml(product.image)}"
@@ -40,7 +40,12 @@ async function loadRecentProducts() {
           <span class="product-site">${escapeHtml(product.site)}</span>
         </div>
       </div>
-    </a>
+      <button class="product-delete" title="Delete">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
   `).join('');
 }
 
@@ -84,6 +89,24 @@ function setupEventListeners() {
   document.getElementById('open-settings').addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('src/dashboard/dashboard.html#settings') });
     window.close();
+  });
+
+  // Product item clicks (delegated)
+  document.getElementById('recent-products').addEventListener('click', async (e) => {
+    const deleteBtn = e.target.closest('.product-delete');
+    const productItem = e.target.closest('.product-item');
+
+    if (!productItem) return;
+
+    if (deleteBtn) {
+      e.stopPropagation();
+      const productId = productItem.dataset.id;
+      await sendMessage({ type: 'DELETE_PRODUCT', productId });
+      await loadRecentProducts();
+      await loadStats();
+    } else {
+      window.open(productItem.dataset.url, '_blank');
+    }
   });
 }
 

@@ -10,21 +10,13 @@
   <div class="popup-container">
     <header class="header">
       <h1>Product History</h1>
-      <button id="toggle-tracking" class="toggle-btn" title="Toggle tracking">
-        <span class="toggle-icon"></span>
-      </button>
+      <div class="tracking-toggle">
+        <span class="tracking-label">Track history</span>
+        <button id="toggle-tracking" class="toggle-btn" title="Toggle tracking">
+          <span class="toggle-icon"></span>
+        </button>
+      </div>
     </header>
-
-    <div class="stats">
-      <div class="stat">
-        <span class="stat-value" id="product-count">0</span>
-        <span class="stat-label">Products</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value" id="storage-used">0 B</span>
-        <span class="stat-label">Storage</span>
-      </div>
-    </div>
 
     <section class="recent-section">
       <h2>Recent Products</h2>
@@ -36,6 +28,10 @@
     <div class="actions">
       <button id="open-dashboard" class="btn btn-primary">View All Products</button>
       <button id="open-settings" class="btn btn-secondary">Settings</button>
+    </div>
+
+    <div class="stats-footer">
+      <span id="product-count">0</span> products · <span id="storage-used">0 B</span> used
     </div>
   </div>
 
