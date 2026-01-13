@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product History - Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>Product History</h1>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="products">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          Products
+        </button>
+        <button class="nav-item" data-view="settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          Settings
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="storage-info">
+          <div class="storage-bar">
+            <div class="storage-fill" id="storage-fill"></div>
+          </div>
+          <span class="storage-text" id="storage-text">0 B used</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Products View -->
+      <div id="products-view" class="view active">
+        <header class="content-header">
+          <div class="search-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" placeholder="Search products...">
+          </div>
+
+          <div class="filters">
+            <select id="site-filter">
+              <option value="">All Sites</option>
+            </select>
+            <select id="sort-by">
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="name-asc">Name: A to Z</option>
+              <option value="name-desc">Name: Z to A</option>
+            </select>
+          </div>
+
+          <div class="header-actions">
+            <span class="product-count" id="product-count">0 products</span>
+            <button id="delete-selected" class="btn btn-danger" style="display: none;">
+              Delete Selected
+            </button>
+          </div>
+        </header>
+
+        <div id="products-grid" class="products-grid">
+          <div class="empty-state">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <h3>No products yet</h3>
+            <p>Products you view while shopping will appear here automatically.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings View -->
+      <div id="settings-view" class="view">
+        <header class="content-header">
+          <h2>Settings</h2>
+        </header>
+
+        <div class="settings-content">
+          <section class="settings-section">
+            <h3>Storage</h3>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <label>Auto-delete products older than</label>
+                <p class="setting-description">Products older than this will be automatically removed</p>
+              </div>
+              <select id="retention-period">
+                <option value="7">1 week</option>
+                <option value="30">1 month</option>
+                <option value="90">3 months</option>
+                <option value="180">6 months</option>
+                <option value="365">1 year</option>
+                <option value="0">Never (keep forever)</option>
+              </select>
+            </div>
+
+            <div class="setting-item storage-usage">
+              <div class="setting-info">
+                <label>Storage Usage</label>
+                <p class="setting-description">
+                  <span id="settings-storage-used">0 B</span> of <span id="settings-storage-quota">10 MB</span> used
+                  (<span id="settings-product-count">0</span> products)
+                </p>
+              </div>
+              <button id="clear-all-btn" class="btn btn-danger">Clear All Data</button>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Tracking</h3>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <label>Enable product tracking</label>
+                <p class="setting-description">Automatically save products as you browse</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="tracking-enabled">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-section">
+            <h3>Sites</h3>
+            <p class="section-description">Choose which sites to track products from</p>
+
+            <div class="sites-grid" id="sites-toggles">
+              <!-- Generated by JS -->
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

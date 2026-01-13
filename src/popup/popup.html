@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product History</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="header">
+      <h1>Product History</h1>
+      <button id="toggle-tracking" class="toggle-btn" title="Toggle tracking">
+        <span class="toggle-icon"></span>
+      </button>
+    </header>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-value" id="product-count">0</span>
+        <span class="stat-label">Products</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="storage-used">0 B</span>
+        <span class="stat-label">Storage</span>
+      </div>
+    </div>
+
+    <section class="recent-section">
+      <h2>Recent Products</h2>
+      <div id="recent-products" class="recent-products">
+        <p class="empty-message">No products saved yet. Start shopping!</p>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button id="open-dashboard" class="btn btn-primary">View All Products</button>
+      <button id="open-settings" class="btn btn-secondary">Settings</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
