@@ -3,6 +3,7 @@
 let allProducts = [];
 let filteredProducts = [];
 let selectedProducts = new Set();
+let priceRange = { min: 0, max: 1000 };
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -35,8 +36,52 @@ async function loadProducts() {
   allProducts = await sendMessage({ type: 'GET_PRODUCTS' });
   filteredProducts = [...allProducts];
   await populateSiteFilter();
+  initPriceFilter();
   renderProducts();
   updateProductCount();
+}
+
+function initPriceFilter() {
+  const prices = allProducts.map(p => parsePrice(p.price)).filter(p => p > 0);
+
+  if (prices.length === 0) {
+    priceRange = { min: 0, max: 1000 };
+  } else {
+    priceRange = {
+      min: 0,
+      max: Math.ceil(Math.max(...prices) / 10) * 10 // Round up to nearest 10
+    };
+  }
+
+  const minInput = document.getElementById('price-min');
+  const maxInput = document.getElementById('price-max');
+
+  minInput.min = priceRange.min;
+  minInput.max = priceRange.max;
+  minInput.value = priceRange.min;
+
+  maxInput.min = priceRange.min;
+  maxInput.max = priceRange.max;
+  maxInput.value = priceRange.max;
+
+  updatePriceDisplay();
+}
+
+function updatePriceDisplay() {
+  const minVal = parseInt(document.getElementById('price-min').value);
+  const maxVal = parseInt(document.getElementById('price-max').value);
+
+  document.getElementById('price-min-display').textContent = `$${minVal}`;
+  document.getElementById('price-max-display').textContent = `$${maxVal}`;
+
+  // Update the fill bar
+  const range = priceRange.max - priceRange.min;
+  const minPercent = ((minVal - priceRange.min) / range) * 100;
+  const maxPercent = ((maxVal - priceRange.min) / range) * 100;
+
+  const fill = document.getElementById('range-fill');
+  fill.style.left = `${minPercent}%`;
+  fill.style.width = `${maxPercent - minPercent}%`;
 }
 
 function renderProducts() {
@@ -60,14 +105,16 @@ function renderProducts() {
   container.innerHTML = filteredProducts.map(product => `
     <div class="product-card ${selectedProducts.has(product.id) ? 'selected' : ''}" data-id="${product.id}">
       <input type="checkbox" class="card-checkbox" ${selectedProducts.has(product.id) ? 'checked' : ''}>
-      <img
-        class="card-image"
-        src="${escapeHtml(product.image)}"
-        alt="${escapeHtml(product.title)}"
-        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%239ca3af%22 stroke-width=%221%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><circle cx=%228.5%22 cy=%228.5%22 r=%221.5%22/><path d=%22M21 15l-5-5L5 21%22/></svg>'"
-      >
+      <div class="card-image-container">
+        ${product.image ? `<img
+          class="card-image"
+          src="${escapeHtml(product.image)}"
+          alt="${escapeHtml(product.title)}"
+          onerror="this.style.display='none'"
+        >` : ''}
+      </div>
       <div class="card-content">
-        <span class="card-site">${escapeHtml(product.site)}</span>
+        <span class="card-site">${escapeHtml(getHostname(product.url))}</span>
         <h3 class="card-title">
           <a href="${escapeHtml(product.url)}" target="_blank" title="${escapeHtml(product.title)}">
             ${escapeHtml(product.title)}
@@ -76,7 +123,7 @@ function renderProducts() {
         ${product.description ? `<p class="card-description">${escapeHtml(product.description)}</p>` : ''}
         <div class="card-footer">
           <div>
-            ${product.price ? `<span class="card-price">${escapeHtml(product.price)}</span>` : ''}
+            ${product.price ? `<span class="card-price">${formatPrice(product.price)}</span>` : ''}
             <span class="card-date">${formatDate(product.savedAt)}</span>
           </div>
           <div class="card-actions">
@@ -101,6 +148,8 @@ function filterAndSortProducts() {
   const searchQuery = document.getElementById('search-input').value.toLowerCase();
   const siteFilter = document.getElementById('site-filter').value;
   const sortBy = document.getElementById('sort-by').value;
+  const priceMin = parseInt(document.getElementById('price-min').value);
+  const priceMax = parseInt(document.getElementById('price-max').value);
 
   // Filter
   filteredProducts = allProducts.filter(product => {
@@ -110,7 +159,10 @@ function filterAndSortProducts() {
 
     const matchesSite = !siteFilter || product.site === siteFilter;
 
-    return matchesSearch && matchesSite;
+    const productPrice = parsePrice(product.price);
+    const matchesPrice = productPrice === 0 || (productPrice >= priceMin && productPrice <= priceMax);
+
+    return matchesSearch && matchesSite && matchesPrice;
   });
 
   // Sort
@@ -215,6 +267,30 @@ function setupEventListeners() {
 
   document.getElementById('site-filter').addEventListener('change', filterAndSortProducts);
   document.getElementById('sort-by').addEventListener('change', filterAndSortProducts);
+
+  // Price range sliders
+  const priceMin = document.getElementById('price-min');
+  const priceMax = document.getElementById('price-max');
+
+  priceMin.addEventListener('input', () => {
+    const minVal = parseInt(priceMin.value);
+    const maxVal = parseInt(priceMax.value);
+    if (minVal > maxVal) {
+      priceMin.value = maxVal;
+    }
+    updatePriceDisplay();
+    filterAndSortProducts();
+  });
+
+  priceMax.addEventListener('input', () => {
+    const minVal = parseInt(priceMin.value);
+    const maxVal = parseInt(priceMax.value);
+    if (maxVal < minVal) {
+      priceMax.value = minVal;
+    }
+    updatePriceDisplay();
+    filterAndSortProducts();
+  });
 
   // Product actions
   document.getElementById('products-grid').addEventListener('click', async (e) => {
@@ -363,7 +439,51 @@ function parsePrice(priceStr) {
   return parseFloat(match[0].replace(/,/g, '')) || 0;
 }
 
+function formatPrice(priceStr) {
+  if (!priceStr) return '';
+
+  // Check if price already has a currency symbol
+  const hasCurrency = /[$£€¥₹]/.test(priceStr);
+
+  // Extract the numeric value
+  const match = priceStr.match(/[\d,.]+/);
+  if (!match) return priceStr;
+
+  let numericValue = parseFloat(match[0].replace(/,/g, ''));
+  if (isNaN(numericValue)) return priceStr;
+
+  // Format number - remove trailing zeros
+  let formatted;
+  if (numericValue % 1 === 0) {
+    formatted = numericValue.toFixed(0);
+  } else {
+    // Remove unnecessary trailing zeros but keep meaningful decimals
+    formatted = numericValue.toFixed(2).replace(/\.?0+$/, '');
+  }
+
+  // Add currency symbol if not present
+  if (!hasCurrency) {
+    return '$' + formatted;
+  }
+
+  // Reconstruct with original currency
+  const currencyMatch = priceStr.match(/[$£€¥₹]/);
+  const currency = currencyMatch ? currencyMatch[0] : '$';
+  return currency + formatted;
+}
+
 function capitalize(str) {
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function getHostname(url) {
+  if (!url) return '';
+  try {
+    const hostname = new URL(url).hostname;
+    // Remove 'www.' prefix if present
+    return hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
 }
