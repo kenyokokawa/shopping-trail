@@ -45,10 +45,13 @@ export async function getProducts() {
 export async function saveProduct(product) {
   const products = await getProducts();
 
-  // Check for duplicate URL (don't save same product twice in short period)
+  // Check for duplicate (same title + image within last hour)
+  const oneHourAgo = Date.now() - 3600000;
   const recentDuplicate = products.find(p =>
-    p.url === product.url &&
-    (Date.now() - p.savedAt) < 3600000 // 1 hour
+    p.savedAt > oneHourAgo &&
+    p.title && product.title &&
+    p.title === product.title &&
+    p.image === (product.image || '')
   );
 
   if (recentDuplicate) {

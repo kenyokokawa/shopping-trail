@@ -73,18 +73,6 @@ async function handleSaveProduct(product) {
     return { success: false, reason: 'tracking_disabled' };
   }
 
-  // Check if site is enabled
-  const siteName = product.site?.toLowerCase();
-  if (siteName && settings.enabledSites) {
-    const isKnownSite = ['amazon', 'ebay', 'walmart', 'target', 'bestbuy'].includes(siteName);
-    if (isKnownSite && !settings.enabledSites[siteName]) {
-      return { success: false, reason: 'site_disabled' };
-    }
-    if (!isKnownSite && !settings.enabledSites.other) {
-      return { success: false, reason: 'site_disabled' };
-    }
-  }
-
   // Save the product
   const result = await saveProduct(product);
 
@@ -96,14 +84,18 @@ async function handleSaveProduct(product) {
   return result;
 }
 
-// Update extension badge with product count
+// Update extension badge with today's product count
 async function updateBadge() {
   const products = await getProducts();
-  const count = products.length;
 
-  if (count > 0) {
-    chrome.action.setBadgeText({ text: count > 99 ? '99+' : count.toString() });
-    chrome.action.setBadgeBackgroundColor({ color: '#4F46E5' });
+  // Count only products saved today
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const todayCount = products.filter(p => p.savedAt >= startOfDay).length;
+
+  if (todayCount > 0) {
+    chrome.action.setBadgeText({ text: todayCount.toString() });
+    chrome.action.setBadgeBackgroundColor({ color: '#1E90FF' });
   } else {
     chrome.action.setBadgeText({ text: '' });
   }
@@ -114,12 +106,28 @@ chrome.alarms.create('daily-cleanup', {
   periodInMinutes: 24 * 60 // Once per day
 });
 
+// Set up midnight alarm to reset badge count
+function scheduleMidnightAlarm() {
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+  const delayMinutes = (midnight.getTime() - now.getTime()) / (1000 * 60);
+
+  chrome.alarms.create('midnight-reset', {
+    delayInMinutes: delayMinutes,
+    periodInMinutes: 24 * 60
+  });
+}
+
+scheduleMidnightAlarm();
+
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'daily-cleanup') {
     const result = await cleanupOldProducts();
     if (result.removed > 0) {
       await updateBadge();
     }
+  } else if (alarm.name === 'midnight-reset') {
+    await updateBadge();
   }
 });
 

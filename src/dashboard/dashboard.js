@@ -124,7 +124,7 @@ function renderProducts() {
         <div class="card-footer">
           <div>
             ${product.price ? `<span class="card-price">${formatPrice(product.price)}</span>` : ''}
-            <span class="card-date">${formatDate(product.savedAt)}</span>
+            <span class="card-date" title="${formatFullDate(product.savedAt)}">${formatDate(product.savedAt)}</span>
           </div>
           <div class="card-actions">
             <a href="${escapeHtml(product.url)}" target="_blank" class="card-btn card-btn-link">View</a>
@@ -211,26 +211,6 @@ async function loadSettings() {
   // Tracking enabled
   document.getElementById('tracking-enabled').checked = settings.trackingEnabled;
 
-  // Site toggles
-  const sitesContainer = document.getElementById('sites-toggles');
-  const sites = [
-    { key: 'amazon', label: 'Amazon' },
-    { key: 'ebay', label: 'eBay' },
-    { key: 'walmart', label: 'Walmart' },
-    { key: 'target', label: 'Target' },
-    { key: 'bestbuy', label: 'Best Buy' },
-    { key: 'other', label: 'Other Sites' }
-  ];
-
-  sitesContainer.innerHTML = sites.map(site => `
-    <div class="site-toggle">
-      <label>${site.label}</label>
-      <label class="switch">
-        <input type="checkbox" data-site="${site.key}" ${settings.enabledSites?.[site.key] !== false ? 'checked' : ''}>
-        <span class="slider"></span>
-      </label>
-    </div>
-  `).join('');
 }
 
 async function loadStorageInfo() {
@@ -350,18 +330,6 @@ function setupEventListeners() {
     });
   });
 
-  document.getElementById('sites-toggles').addEventListener('change', async (e) => {
-    if (e.target.dataset.site) {
-      const settings = await sendMessage({ type: 'GET_SETTINGS' });
-      const enabledSites = { ...settings.enabledSites };
-      enabledSites[e.target.dataset.site] = e.target.checked;
-
-      await sendMessage({
-        type: 'UPDATE_SETTINGS',
-        settings: { enabledSites }
-      });
-    }
-  });
 
   document.getElementById('clear-all-btn').addEventListener('click', async () => {
     if (confirm('Are you sure you want to delete ALL saved products? This cannot be undone.')) {
@@ -420,6 +388,18 @@ function formatDate(timestamp) {
     month: 'short',
     day: 'numeric',
     year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  });
+}
+
+function formatFullDate(timestamp) {
+  const date = new Date(timestamp);
+  return date.toLocaleString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
   });
 }
 

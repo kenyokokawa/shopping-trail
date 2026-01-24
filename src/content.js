@@ -103,262 +103,10 @@
   }
 
   // ============================================
-  // EXTRACTORS (inlined for content script)
+  // EXTRACTORS (JSON-LD / Schema.org / Open Graph)
   // ============================================
 
   function extractProduct() {
-    const url = window.location.href;
-
-    // Try site-specific extractors first
-    if (isAmazon(url)) {
-      const product = extractAmazon();
-      if (product) return product;
-    }
-
-    if (isEbay(url)) {
-      const product = extractEbay();
-      if (product) return product;
-    }
-
-    if (isWalmart(url)) {
-      const product = extractWalmart();
-      if (product) return product;
-    }
-
-    if (isTarget(url)) {
-      const product = extractTarget();
-      if (product) return product;
-    }
-
-    if (isBestBuy(url)) {
-      const product = extractBestBuy();
-      if (product) return product;
-    }
-
-    // Fall back to generic extraction
-    return extractGeneric();
-  }
-
-  // --- Amazon ---
-  function isAmazon(url) {
-    return /amazon\.(com|co\.uk|ca|de|co\.jp|fr|es|it|com\.au|in|com\.br|com\.mx)/.test(
-      url
-    );
-  }
-
-  function extractAmazon() {
-    if (!/\/(dp|gp\/product)\/[A-Z0-9]{10}/i.test(window.location.pathname)) {
-      return null;
-    }
-
-    const title = getText("#productTitle") || getText("#title span");
-    if (!title) return null;
-
-    const bullets = document.querySelectorAll("#feature-bullets li span");
-    let description = "";
-    if (bullets.length > 0) {
-      description = Array.from(bullets)
-        .map((b) => b.textContent?.trim())
-        .filter(Boolean)
-        .slice(0, 5)
-        .join(" | ");
-    }
-
-    const image =
-      getImage("#landingImage") ||
-      getImage("#imgBlkFront") ||
-      getImage(".a-dynamic-image");
-    const price =
-      getText(".a-price .a-offscreen") ||
-      getText("#priceblock_ourprice") ||
-      getText("#corePrice_feature_div .a-offscreen");
-
-    return {
-      title,
-      description,
-      image: image ? image.replace(/\._[^.]+_\./, "._SL500_.") : "",
-      price,
-      currency: detectCurrency(price, "amazon"),
-      url: window.location.href,
-      site: "amazon",
-    };
-  }
-
-  // --- eBay ---
-  function isEbay(url) {
-    return /ebay\.(com|co\.uk|de|fr|it|es|com\.au|ca)/.test(url);
-  }
-
-  function extractEbay() {
-    if (!/\/itm\//.test(window.location.pathname)) {
-      return null;
-    }
-
-    let title =
-      getText("h1.x-item-title__mainTitle span") ||
-      getText('h1[itemprop="name"]');
-    if (!title) return null;
-    title = title.replace(/^Details about\s+/i, "");
-
-    const image =
-      getImage(".ux-image-carousel-item.active img") ||
-      getImage(".ux-image-carousel-item img");
-    const price =
-      getText('.x-price-primary span[itemprop="price"]') ||
-      getText(".x-price-primary .ux-textspans");
-
-    return {
-      title,
-      description: getText(".x-item-title__subTitle span") || "",
-      image: image ? image.replace(/s-l\d+/, "s-l500") : "",
-      price,
-      currency: detectCurrency(price, "ebay"),
-      url: window.location.href,
-      site: "ebay",
-    };
-  }
-
-  // --- Walmart ---
-  function isWalmart(url) {
-    return /walmart\.com/.test(url);
-  }
-
-  function extractWalmart() {
-    if (!/\/ip\//.test(window.location.pathname)) {
-      return null;
-    }
-
-    const title =
-      getText('h1[itemprop="name"]') ||
-      getText('[data-testid="product-title"]');
-    if (!title) return null;
-
-    const highlights = document.querySelectorAll(
-      '[data-testid="product-highlights"] li'
-    );
-    let description = "";
-    if (highlights.length > 0) {
-      description = Array.from(highlights)
-        .map((h) => h.textContent?.trim())
-        .filter(Boolean)
-        .slice(0, 5)
-        .join(" | ");
-    }
-
-    const image =
-      getImage('[data-testid="hero-image-container"] img') ||
-      getImage(".hover-zoom-hero-image img");
-    const priceEl = document.querySelector('[itemprop="price"]');
-    let price = priceEl?.getAttribute("content");
-    if (price) price = "$" + price;
-    if (!price) price = getText('[data-testid="price-wrap"] span');
-
-    return {
-      title,
-      description,
-      image: image || "",
-      price: price || "",
-      currency: "USD",
-      url: window.location.href,
-      site: "walmart",
-    };
-  }
-
-  // --- Target ---
-  function isTarget(url) {
-    return /target\.com/.test(url);
-  }
-
-  function extractTarget() {
-    if (
-      !/\/p\//.test(window.location.pathname) &&
-      !/\/A-\d+/.test(window.location.pathname)
-    ) {
-      return null;
-    }
-
-    const title =
-      getText('h1[data-test="product-title"]') ||
-      getText('[data-test="product-title"]');
-    if (!title) return null;
-
-    const highlights = document.querySelectorAll(
-      '[data-test="product-highlights"] li'
-    );
-    let description = "";
-    if (highlights.length > 0) {
-      description = Array.from(highlights)
-        .map((h) => h.textContent?.trim())
-        .filter(Boolean)
-        .slice(0, 5)
-        .join(" | ");
-    }
-
-    const image =
-      getImage('[data-test="product-image"] img') ||
-      getImage(".slideDeckPicture img");
-    let price = getText('[data-test="product-price"]');
-    if (price) {
-      price = price.split("-")[0].trim();
-    }
-
-    return {
-      title,
-      description,
-      image: image || "",
-      price: price || "",
-      currency: "USD",
-      url: window.location.href,
-      site: "target",
-    };
-  }
-
-  // --- Best Buy ---
-  function isBestBuy(url) {
-    return /bestbuy\.(com|ca)/.test(url);
-  }
-
-  function extractBestBuy() {
-    if (
-      !/\/site\/.*\/\d+\.p/.test(window.location.pathname) &&
-      !document.querySelector("[data-sku-id]")
-    ) {
-      return null;
-    }
-
-    const title = getText(".sku-title h1") || getText("h1.heading-5");
-    if (!title) return null;
-
-    const features = document.querySelectorAll(".feature-list li");
-    let description = "";
-    if (features.length > 0) {
-      description = Array.from(features)
-        .map((f) => f.textContent?.trim())
-        .filter(Boolean)
-        .slice(0, 5)
-        .join(" | ");
-    }
-
-    const image =
-      getImage(".primary-image img") ||
-      getImage('[data-track="primary-image"] img');
-    const price =
-      getText('[data-testid="customer-price"] span') ||
-      getText(".priceView-customer-price span");
-
-    return {
-      title,
-      description,
-      image: image || "",
-      price: price || "",
-      currency: window.location.hostname.includes(".ca") ? "CAD" : "USD",
-      url: window.location.href,
-      site: "bestbuy",
-    };
-  }
-
-  // --- Generic (JSON-LD / Schema.org / Open Graph) ---
-  function extractGeneric() {
     // Try JSON-LD
     const jsonLd = extractJsonLd();
     if (jsonLd) return jsonLd;
@@ -431,9 +179,25 @@
 
     let image = "";
     if (data.image) {
-      if (typeof data.image === "string") image = data.image;
-      else if (Array.isArray(data.image)) image = data.image[0];
-      else if (data.image.url) image = data.image.url;
+      if (typeof data.image === "string") {
+        image = data.image;
+      } else if (Array.isArray(data.image)) {
+        // Handle array of strings or array of objects
+        const firstImage = data.image[0];
+        if (typeof firstImage === "string") {
+          image = firstImage;
+        } else if (firstImage && firstImage.url) {
+          image = firstImage.url;
+        } else if (firstImage && firstImage["@id"]) {
+          image = firstImage["@id"];
+        }
+      } else if (data.image.url) {
+        image = data.image.url;
+      } else if (data.image["@id"]) {
+        image = data.image["@id"];
+      } else if (data.image.contentUrl) {
+        image = data.image.contentUrl;
+      }
     }
 
     return {
@@ -448,34 +212,68 @@
   }
 
   function extractMicrodata() {
-    const productEl = document.querySelector(
+    // Check all Product microdata blocks, not just the first one
+    const productEls = document.querySelectorAll(
       '[itemtype*="schema.org/Product"]'
     );
-    if (!productEl) return null;
+    if (productEls.length === 0) return null;
 
-    const nameEl = productEl.querySelector('[itemprop="name"]');
-    const name = nameEl?.textContent?.trim() || nameEl?.getAttribute("content");
+    let name = "";
+    let description = "";
+    let image = "";
+    let price = "";
+    let currency = "USD";
+
+    // Gather data from all Product blocks
+    for (const productEl of productEls) {
+      if (!name) {
+        const nameEl = productEl.querySelector('[itemprop="name"]');
+        name =
+          nameEl?.textContent?.trim() || nameEl?.getAttribute("content") || "";
+      }
+
+      if (!description) {
+        const descEl = productEl.querySelector('[itemprop="description"]');
+        description =
+          descEl?.textContent?.trim() || descEl?.getAttribute("content") || "";
+      }
+
+      if (!image) {
+        const imageEl = productEl.querySelector('[itemprop="image"]');
+        image =
+          imageEl?.src ||
+          imageEl?.getAttribute("content") ||
+          imageEl?.getAttribute("href") ||
+          "";
+      }
+
+      if (!price) {
+        const priceEl = productEl.querySelector('[itemprop="price"]');
+        price =
+          priceEl?.textContent?.trim() ||
+          priceEl?.getAttribute("content") ||
+          "";
+      }
+
+      if (currency === "USD") {
+        const currencyEl = productEl.querySelector(
+          '[itemprop="priceCurrency"]'
+        );
+        const foundCurrency =
+          currencyEl?.textContent?.trim() ||
+          currencyEl?.getAttribute("content");
+        if (foundCurrency) currency = foundCurrency;
+      }
+    }
+
     if (!name) return null;
-
-    const descEl = productEl.querySelector('[itemprop="description"]');
-    const priceEl = productEl.querySelector('[itemprop="price"]');
-    const currencyEl = productEl.querySelector('[itemprop="priceCurrency"]');
-    const imageEl = productEl.querySelector('[itemprop="image"]');
 
     return {
       title: name,
-      description: (
-        descEl?.textContent?.trim() ||
-        descEl?.getAttribute("content") ||
-        ""
-      ).substring(0, 300),
-      image: imageEl?.src || imageEl?.getAttribute("content") || "",
-      price:
-        priceEl?.textContent?.trim() || priceEl?.getAttribute("content") || "",
-      currency:
-        currencyEl?.textContent?.trim() ||
-        currencyEl?.getAttribute("content") ||
-        "USD",
+      description: description.substring(0, 300),
+      image,
+      price,
+      currency,
       url: window.location.href,
       site: extractSiteName(),
     };
@@ -501,6 +299,14 @@
     const title = getMeta("og:title") || document.title;
     if (!title) return null;
 
+    // Try secure URL first, then regular og:image
+    let image = getMeta("og:image:secure_url") || getMeta("og:image") || "";
+
+    // Handle protocol-relative URLs
+    if (image.startsWith("//")) {
+      image = "https:" + image;
+    }
+
     return {
       title,
       description: (
@@ -508,7 +314,7 @@
         getMeta("description") ||
         ""
       ).substring(0, 300),
-      image: getMeta("og:image") || "",
+      image,
       price: priceAmount || "",
       currency:
         getMeta("product:price:currency") ||
@@ -520,32 +326,35 @@
   }
 
   // --- Helpers ---
-  function getText(selector) {
-    const el = document.querySelector(selector);
-    return el?.textContent?.trim() || null;
-  }
-
-  function getImage(selector) {
-    const el = document.querySelector(selector);
-    return el?.src || null;
-  }
-
   function getPageMetaImage() {
     // Try og:image first (there may be multiple, get all and pick the best)
     const ogImages = document.querySelectorAll('meta[property="og:image"]');
     for (const meta of ogImages) {
       const content = meta.getAttribute("content");
-      if (content && content.startsWith("http")) {
-        return content;
+      if (content && (content.startsWith("http") || content.startsWith("//"))) {
+        return content.startsWith("//") ? "https:" + content : content;
       }
+    }
+
+    // Try og:image:secure_url
+    const ogSecure = document
+      .querySelector('meta[property="og:image:secure_url"]')
+      ?.getAttribute("content");
+    if (ogSecure && ogSecure.startsWith("http")) {
+      return ogSecure;
     }
 
     // Try twitter:image
     const twitterImage = document
       .querySelector('meta[name="twitter:image"]')
       ?.getAttribute("content");
-    if (twitterImage && twitterImage.startsWith("http")) {
-      return twitterImage;
+    if (
+      twitterImage &&
+      (twitterImage.startsWith("http") || twitterImage.startsWith("//"))
+    ) {
+      return twitterImage.startsWith("//")
+        ? "https:" + twitterImage
+        : twitterImage;
     }
 
     // Try link rel="image_src"
@@ -556,6 +365,61 @@
       return linkImage;
     }
 
+    // Try to find a product image in the page content
+    // Look for common product image selectors
+    const productImageSelectors = [
+      "[data-product-image] img",
+      ".product-image img",
+      ".product-photo img",
+      ".product-gallery img",
+      ".product__image img",
+      ".product-single__photo img",
+      '[class*="product"] img[src*="product"]',
+      '[class*="gallery"] img',
+      'main img[src*="cdn"]',
+      'main img[src*="product"]',
+    ];
+
+    for (const selector of productImageSelectors) {
+      const img = document.querySelector(selector);
+      if (img) {
+        const src =
+          img.src ||
+          img.getAttribute("data-src") ||
+          img.getAttribute("data-lazy-src");
+        if (src && (src.startsWith("http") || src.startsWith("//"))) {
+          return src.startsWith("//") ? "https:" + src : src;
+        }
+      }
+    }
+
+    // Last resort: find the largest image on the page that looks like a product image
+    const allImages = document.querySelectorAll(
+      'img[src*="cdn"], img[src*="product"], img[src*="shop"]'
+    );
+    let bestImage = null;
+    let bestSize = 0;
+
+    for (const img of allImages) {
+      const src = img.src || img.getAttribute("data-src");
+      if (!src || (!src.startsWith("http") && !src.startsWith("//"))) continue;
+
+      // Skip tiny images, icons, logos
+      const width = img.naturalWidth || img.width || 0;
+      const height = img.naturalHeight || img.height || 0;
+      const size = width * height;
+
+      if (size > bestSize && size > 10000) {
+        // At least 100x100
+        bestSize = size;
+        bestImage = src;
+      }
+    }
+
+    if (bestImage) {
+      return bestImage.startsWith("//") ? "https:" + bestImage : bestImage;
+    }
+
     return null;
   }
 
@@ -563,37 +427,5 @@
     const hostname = window.location.hostname.replace(/^www\./, "");
     const parts = hostname.split(".");
     return parts.length >= 2 ? parts[parts.length - 2] : hostname;
-  }
-
-  function detectCurrency(price, site) {
-    if (!price) return "USD";
-
-    const symbols = {
-      "£": "GBP",
-      "€": "EUR",
-      "¥": "JPY",
-      "₹": "INR",
-      R$: "BRL",
-    };
-
-    for (const [symbol, code] of Object.entries(symbols)) {
-      if (price.includes(symbol)) return code;
-    }
-
-    const domain = window.location.hostname;
-    if (domain.includes(".co.uk")) return "GBP";
-    if (
-      domain.includes(".de") ||
-      domain.includes(".fr") ||
-      domain.includes(".es") ||
-      domain.includes(".it")
-    )
-      return "EUR";
-    if (domain.includes(".co.jp")) return "JPY";
-    if (domain.includes(".ca")) return "CAD";
-    if (domain.includes(".com.au")) return "AUD";
-    if (domain.includes(".in")) return "INR";
-
-    return "USD";
   }
 })();
