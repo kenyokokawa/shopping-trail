@@ -60,6 +60,25 @@
     </button>
     <button
       class="nav-item"
+      class:active={currentView === 'analytics'}
+      onclick={() => onNavigate('analytics')}
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <rect x="3" y="12" width="4" height="9"></rect>
+        <rect x="10" y="7" width="4" height="14"></rect>
+        <rect x="17" y="3" width="4" height="18"></rect>
+      </svg>
+      Analytics
+    </button>
+    <button
+      class="nav-item"
       class:active={currentView === 'settings'}
       onclick={() => onNavigate('settings')}
     >
@@ -202,6 +221,7 @@
 
     .sidebar-nav {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       padding: 12px;
     }

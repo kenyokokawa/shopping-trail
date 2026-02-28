@@ -2,6 +2,7 @@
   import { sendMessage } from '@/utils/messaging.js';
   import Sidebar from './Sidebar.svelte';
   import ProductsView from './ProductsView.svelte';
+  import AnalyticsView from './AnalyticsView.svelte';
   import SettingsView from './SettingsView.svelte';
 
   let DebugView = $state(null);
@@ -40,6 +41,8 @@
     const hash = window.location.hash.replace('#', '');
     if (hash === 'settings') {
       currentView = 'settings';
+    } else if (hash === 'analytics') {
+      currentView = 'analytics';
     } else if (hash === 'debug') {
       currentView = 'debug';
     }
@@ -61,6 +64,8 @@
   <main class="main-content">
     {#if currentView === 'products'}
       <ProductsView {allProducts} {onDataChanged} />
+    {:else if currentView === 'analytics'}
+      <AnalyticsView {allProducts} />
     {:else if currentView === 'settings'}
       <SettingsView {storageInfo} {onDataChanged} />
     {:else if currentView === 'debug' && DebugView}

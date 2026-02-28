@@ -70,7 +70,7 @@ export function formatPrice(priceStr) {
   if (numericValue % 1 === 0) {
     formatted = numericValue.toFixed(0);
   } else {
-    formatted = numericValue.toFixed(2).replace(/\.?0+$/, '');
+    formatted = numericValue.toFixed(2);
   }
 
   if (!hasCurrency) {
