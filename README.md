@@ -5,7 +5,7 @@ A Chrome extension that automatically saves products you view while shopping onl
 ## Features
 
 - **Automatic Product Detection**: Saves products as you browse shopping sites
-- **Supported Sites**: Amazon, eBay, Walmart, Target, Best Buy, plus generic support for any site using schema.org/JSON-LD markup
+- **Works on Any Shopping Site**: Uses generic extraction (schema.org, JSON-LD, Microdata, Open Graph) to detect products on any site
 - **Full-Screen Dashboard**: View all saved products in a grid layout with images, names, descriptions, prices, and links
 - **Search & Filter**: Find products by name, filter by site, sort by date or price
 - **Local Storage**: All data stored locally in your browser - no external servers
@@ -36,7 +36,7 @@ product-history-tracker/
 ├── src/
 │   ├── background.js       # Service worker for storage & cleanup
 │   ├── content.js          # Product detection on pages
-│   ├── extractors/         # Site-specific product extractors
+│   ├── extractors/         # Generic product extractors
 │   ├── popup/              # Extension popup UI
 │   ├── dashboard/          # Full-screen dashboard
 │   └── utils/              # Storage utilities

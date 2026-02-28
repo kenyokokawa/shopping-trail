@@ -3,6 +3,7 @@
 export default defineContentScript({
   matches: ['https://*/*', 'http://*/*'],
   runAt: 'document_idle',
+  registration: 'manifest',
 
   main(ctx) {
     let lastExtractedUrl = null;
@@ -42,11 +43,12 @@ export default defineContentScript({
     }
 
     function observeUrlChanges() {
-      let currentUrl = window.location.href;
+      let currentUrl = normalizeUrl(window.location.href);
 
       setInterval(() => {
-        if (window.location.href !== currentUrl) {
-          currentUrl = window.location.href;
+        const newUrl = normalizeUrl(window.location.href);
+        if (newUrl !== currentUrl) {
+          currentUrl = newUrl;
           lastExtractedUrl = null;
           scheduleExtraction();
         }
@@ -65,8 +67,13 @@ export default defineContentScript({
       });
     }
 
+    function normalizeUrl(url) {
+      // Strip trailing # and hash fragments for comparison
+      return url.replace(/#.*$/, '');
+    }
+
     function attemptExtraction() {
-      const currentUrl = window.location.href;
+      const currentUrl = normalizeUrl(window.location.href);
 
       if (currentUrl === lastExtractedUrl) {
         debugLog('Skipping extraction, URL already processed:', currentUrl);
