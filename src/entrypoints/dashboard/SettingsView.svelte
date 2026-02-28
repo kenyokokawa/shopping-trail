@@ -6,6 +6,7 @@
 
   let retentionDays = $state(365);
   let trackingEnabled = $state(true);
+  let debugMode = $state(false);
 
   $effect(() => {
     loadSettings();
@@ -15,6 +16,7 @@
     const settings = await sendMessage({ type: 'GET_SETTINGS' });
     retentionDays = settings.retentionDays;
     trackingEnabled = settings.trackingEnabled;
+    debugMode = settings.debugMode ?? false;
   }
 
   async function handleRetentionChange(e) {
@@ -31,6 +33,15 @@
       type: 'UPDATE_SETTINGS',
       settings: { trackingEnabled },
     });
+  }
+
+  async function handleDebugModeChange(e) {
+    debugMode = e.target.checked;
+    await sendMessage({
+      type: 'UPDATE_SETTINGS',
+      settings: { debugMode },
+    });
+    await onDataChanged();
   }
 
   async function handleClearAll() {
@@ -100,6 +111,28 @@
           type="checkbox"
           checked={trackingEnabled}
           onchange={handleTrackingChange}
+        />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <h3>Developer</h3>
+
+    <div class="setting-item">
+      <div class="setting-info">
+        <label for="debug-mode">Debug mode</label>
+        <p class="setting-description">
+          Show the Debug view in the sidebar and log detailed extraction and duplicate detection info to the console
+        </p>
+      </div>
+      <label class="switch">
+        <input
+          id="debug-mode"
+          type="checkbox"
+          checked={debugMode}
+          onchange={handleDebugModeChange}
         />
         <span class="slider"></span>
       </label>

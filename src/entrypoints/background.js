@@ -55,12 +55,18 @@ export default defineBackground({
 
     async function handleSaveProduct(product) {
       const settings = await getSettings();
+      const debug = settings.debugMode;
+
+      if (debug) console.log('[PHT Debug] SAVE_PRODUCT message received:', { title: product.title, url: product.url });
 
       if (!settings.trackingEnabled) {
+        if (debug) console.log('[PHT Debug] Tracking disabled, ignoring product');
         return { success: false, reason: 'tracking_disabled' };
       }
 
       const result = await saveProduct(product);
+
+      if (debug) console.log('[PHT Debug] saveProduct() result:', result.success ? 'saved' : result.reason);
 
       if (result.success) {
         await updateBadge();

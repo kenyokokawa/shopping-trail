@@ -4,8 +4,10 @@
   import ProductsView from './ProductsView.svelte';
   import SettingsView from './SettingsView.svelte';
 
+  let DebugView = $state(null);
   let currentView = $state('products');
   let allProducts = $state([]);
+  let debugMode = $state(false);
   let storageInfo = $state({
     bytesUsed: 0,
     formattedSize: '0 B',
@@ -19,18 +21,27 @@
   });
 
   async function loadData() {
-    const [products, usage] = await Promise.all([
+    const [products, usage, settings] = await Promise.all([
       sendMessage({ type: 'GET_PRODUCTS' }),
       sendMessage({ type: 'GET_STORAGE_USAGE' }),
+      sendMessage({ type: 'GET_SETTINGS' }),
     ]);
     allProducts = products || [];
     storageInfo = usage;
+    debugMode = settings.debugMode ?? false;
+
+    if (debugMode && !DebugView) {
+      const m = await import('./DebugView.svelte');
+      DebugView = m.default;
+    }
   }
 
   function handleHashNavigation() {
     const hash = window.location.hash.replace('#', '');
     if (hash === 'settings') {
       currentView = 'settings';
+    } else if (hash === 'debug') {
+      currentView = 'debug';
     }
   }
 
@@ -45,13 +56,16 @@
 </script>
 
 <div class="app">
-  <Sidebar {currentView} {storageInfo} onNavigate={switchView} />
+  <Sidebar {currentView} {storageInfo} {debugMode} onNavigate={switchView} />
 
   <main class="main-content">
     {#if currentView === 'products'}
       <ProductsView {allProducts} {onDataChanged} />
     {:else if currentView === 'settings'}
       <SettingsView {storageInfo} {onDataChanged} />
+    {:else if currentView === 'debug' && DebugView}
+      {@const Debug = DebugView}
+      <Debug />
     {/if}
   </main>
 </div>

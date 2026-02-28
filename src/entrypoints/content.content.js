@@ -3,10 +3,21 @@
 export default defineContentScript({
   matches: ['https://*/*', 'http://*/*'],
   runAt: 'document_idle',
+  registration: 'manifest',
 
   main(ctx) {
     let lastExtractedUrl = null;
     let extractionTimeout = null;
+    let debugMode = false;
+
+    // Load debug setting
+    chrome.storage.local.get('settings', (result) => {
+      debugMode = result?.settings?.debugMode || false;
+    });
+
+    function debugLog(...args) {
+      if (debugMode) console.log('[PHT Debug]', ...args);
+    }
 
     // Initialize extraction on page load
     init();
@@ -32,11 +43,12 @@ export default defineContentScript({
     }
 
     function observeUrlChanges() {
-      let currentUrl = window.location.href;
+      let currentUrl = normalizeUrl(window.location.href);
 
       setInterval(() => {
-        if (window.location.href !== currentUrl) {
-          currentUrl = window.location.href;
+        const newUrl = normalizeUrl(window.location.href);
+        if (newUrl !== currentUrl) {
+          currentUrl = newUrl;
           lastExtractedUrl = null;
           scheduleExtraction();
         }
@@ -55,16 +67,24 @@ export default defineContentScript({
       });
     }
 
+    function normalizeUrl(url) {
+      // Strip trailing # and hash fragments for comparison
+      return url.replace(/#.*$/, '');
+    }
+
     function attemptExtraction() {
-      const currentUrl = window.location.href;
+      const currentUrl = normalizeUrl(window.location.href);
 
       if (currentUrl === lastExtractedUrl) {
+        debugLog('Skipping extraction, URL already processed:', currentUrl);
         return;
       }
 
+      debugLog('Attempting extraction on:', currentUrl);
       const product = extractProduct();
 
       if (product && product.title) {
+        debugLog('Product extracted:', { title: product.title, price: product.price, method: product._method });
         const hasValidImage =
           product.image &&
           (product.image.startsWith('http') || product.image.startsWith('//'));
@@ -83,10 +103,14 @@ export default defineContentScript({
     }
 
     function sendToBackground(product) {
+      debugLog('Sending product to background:', { title: product.title, url: product.url });
       chrome.runtime
         .sendMessage({
           type: 'SAVE_PRODUCT',
           product: product,
+        })
+        .then((result) => {
+          debugLog('Background response:', result);
         })
         .catch((err) => {
           // Extension context invalidated, ignore
@@ -99,14 +123,24 @@ export default defineContentScript({
 
     function extractProduct() {
       const jsonLd = extractJsonLd();
-      if (jsonLd) return jsonLd;
+      if (jsonLd) {
+        debugLog('Extraction method: JSON-LD');
+        return jsonLd;
+      }
 
       const microdata = extractMicrodata();
-      if (microdata) return microdata;
+      if (microdata) {
+        debugLog('Extraction method: Microdata');
+        return microdata;
+      }
 
       const og = extractOpenGraph();
-      if (og) return og;
+      if (og) {
+        debugLog('Extraction method: Open Graph');
+        return og;
+      }
 
+      debugLog('No product data found on page');
       return null;
     }
 
