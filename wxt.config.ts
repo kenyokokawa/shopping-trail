@@ -8,6 +8,11 @@ export default defineConfig({
     version: '1.0.0',
     description:
       'Automatically saves products you view while shopping online. Browse your product history anytime.',
+    icons: {
+      16: 'icon/16.png',
+      48: 'icon/48.png',
+      128: 'icon/128.png',
+    },
     permissions: ['storage', 'alarms'],
     host_permissions: [
       'https://*.amazon.com/*',
