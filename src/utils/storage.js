@@ -9,14 +9,6 @@ const DEFAULT_SETTINGS = {
   retentionDays: 365, // 1 year default
   trackingEnabled: true,
   debugMode: false,
-  enabledSites: {
-    amazon: true,
-    ebay: true,
-    walmart: true,
-    target: true,
-    bestbuy: true,
-    other: true
-  }
 };
 
 // Debug logging helper - only logs when enabled
@@ -217,6 +209,19 @@ export async function getProductsBySite(site) {
 export async function getUniqueSites() {
   const products = await getProducts();
   return [...new Set(products.map(p => p.site).filter(Boolean))];
+}
+
+// Import products (merge mode: skip existing IDs)
+export async function importProducts(newProducts) {
+  const existing = await getProducts();
+  const idSet = new Set(existing.map(p => p.id));
+  const toAdd = newProducts.filter(p => !idSet.has(p.id));
+  if (toAdd.length > 0) {
+    const merged = [...toAdd, ...existing];
+    merged.sort((a, b) => b.savedAt - a.savedAt);
+    await chrome.storage.local.set({ [STORAGE_KEYS.PRODUCTS]: merged });
+  }
+  return { added: toAdd.length, skipped: newProducts.length - toAdd.length };
 }
 
 export { STORAGE_KEYS, DEFAULT_SETTINGS };

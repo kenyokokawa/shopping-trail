@@ -12,6 +12,7 @@ import {
   getRecentProducts,
   searchProducts,
   getUniqueSites,
+  importProducts,
 } from '@/utils/storage.js';
 
 export default defineBackground({
@@ -46,6 +47,8 @@ export default defineBackground({
           return searchProducts(message.query);
         case 'GET_UNIQUE_SITES':
           return getUniqueSites();
+        case 'IMPORT_PRODUCTS':
+          return importProducts(message.products);
         case 'CLEANUP':
           return cleanupOldProducts();
         default:

@@ -1,6 +1,15 @@
 <script>
   import { sendMessage } from '@/utils/messaging.js';
   import { formatBytes } from '@/utils/formatters.js';
+  import {
+    productsToJson,
+    productsToCsv,
+    parseJsonImport,
+    parseCsvImport,
+    downloadFile,
+    readFileAsText,
+  } from '@/utils/exportImport.js';
+  import { importProducts } from '@/utils/storage.js';
 
   let { storageInfo, onDataChanged } = $props();
 
@@ -54,6 +63,70 @@
       await onDataChanged();
     }
   }
+
+  let fileInput;
+
+  async function handleExportJson() {
+    const products = await sendMessage({ type: 'GET_PRODUCTS' });
+    if (!products || products.length === 0) {
+      alert('No products to export.');
+      return;
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    downloadFile(productsToJson(products), `product-history-${date}.json`, 'application/json');
+  }
+
+  async function handleExportCsv() {
+    const products = await sendMessage({ type: 'GET_PRODUCTS' });
+    if (!products || products.length === 0) {
+      alert('No products to export.');
+      return;
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    downloadFile(productsToCsv(products), `product-history-${date}.csv`, 'text/csv');
+  }
+
+  async function handleImportFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset input so same file can be re-imported
+    e.target.value = '';
+
+    const text = await readFileAsText(file);
+    const isJson = file.name.toLowerCase().endsWith('.json');
+    const isCsv = file.name.toLowerCase().endsWith('.csv');
+
+    if (!isJson && !isCsv) {
+      alert('Please select a .json or .csv file.');
+      return;
+    }
+
+    const result = isJson ? parseJsonImport(text) : parseCsvImport(text);
+
+    if (result.error) {
+      alert(`Import failed: ${result.error}`);
+      return;
+    }
+
+    const { products, warnings } = result;
+    if (products.length === 0) {
+      alert('No valid products found in the file.');
+      return;
+    }
+
+    const n = products.length;
+    if (!confirm(`Import ${n} ${n === 1 ? 'product' : 'products'}?`)) return;
+
+    const importResult = await importProducts(products);
+
+    const { added, skipped } = importResult;
+    let msg = `Import complete! ${added} ${added === 1 ? 'product' : 'products'} added. ${skipped} ${skipped === 1 ? 'duplicate' : 'duplicates'} skipped.`;
+    if (warnings.length > 0) {
+      msg += `\n\n${warnings.length} ${warnings.length === 1 ? 'row' : 'rows'} skipped due to validation errors.`;
+    }
+    alert(msg);
+    await onDataChanged();
+  }
 </script>
 
 <header class="content-header">
@@ -92,6 +165,46 @@
       <button class="btn btn-danger" onclick={handleClearAll}>
         Clear All Data
       </button>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <h3>Data Management</h3>
+
+    <div class="setting-item">
+      <div class="setting-info">
+        <span class="setting-label">Export products</span>
+        <p class="setting-description">
+          Download your product history as a file
+        </p>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick={handleExportJson}>
+          Export JSON
+        </button>
+        <button class="btn btn-secondary" onclick={handleExportCsv}>
+          Export CSV
+        </button>
+      </div>
+    </div>
+
+    <div class="setting-item">
+      <div class="setting-info">
+        <span class="setting-label">Import products</span>
+        <p class="setting-description">
+          Restore products from a JSON or CSV file
+        </p>
+      </div>
+      <button class="btn btn-secondary" onclick={() => fileInput.click()}>
+        Import File
+      </button>
+      <input
+        type="file"
+        accept=".json,.csv"
+        bind:this={fileInput}
+        onchange={handleImportFile}
+        style="display: none;"
+      />
     </div>
   </section>
 
@@ -233,6 +346,21 @@
     cursor: pointer;
     transition: all var(--transition-fast);
     border: none;
+  }
+
+  .btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+  }
+
+  .btn-secondary:hover {
+    background: var(--border-color);
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
   }
 
   .btn-danger {

@@ -13,8 +13,6 @@ A working Chrome extension that detects products on any site using generic extra
 - [ ] Blacklist specific sites from product tracking (user-configurable)
 
 ### Core Features
-- [ ] Export data (CSV and JSON)
-- [ ] Import data (restore from backup)
 - [ ] Product price tracking — tag showing price increased/decreased since first saved
 - [ ] Product categories / tags (manual or auto-detected)
 - [ ] Favorites / wishlist — pin products to save them from auto-cleanup
@@ -64,3 +62,5 @@ A working Chrome extension that detects products on any site using generic extra
 - [x] Storage usage monitoring
 - [x] Debug mode
 - [x] Migrate from vanilla JS to Svelte 5
+- [x] Export data (CSV and JSON)
+- [x] Import data (restore from backup)
