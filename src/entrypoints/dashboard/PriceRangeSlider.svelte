@@ -1,23 +1,46 @@
 <script>
   let { min = 0, max = 1000, valueMin = 0, valueMax = 1000, onChange } = $props();
 
+  // Aggressive log scale: base 1000 so the slider dedicates most of its
+  // range to lower prices. Midpoint ≈ 3% of max price.
+  // Formula: price = max * (1000^(pos/STEPS) - 1) / 999
+  const STEPS = 1000;
+  const BASE = 1000;
+  const LOG_BASE = Math.log(BASE);
+
+  function priceToPos(price) {
+    if (max <= 0 || price <= 0) return 0;
+    if (price >= max) return STEPS;
+    return Math.round(STEPS * Math.log(1 + (BASE - 1) * price / max) / LOG_BASE);
+  }
+
+  function posToPrice(pos) {
+    if (max <= 0) return 0;
+    if (pos <= 0) return 0;
+    if (pos >= STEPS) return max;
+    return Math.round(max * (Math.pow(BASE, pos / STEPS) - 1) / (BASE - 1));
+  }
+
+  let posMin = $derived(priceToPos(valueMin));
+  let posMax = $derived(priceToPos(valueMax));
+
   let fillLeft = $derived(
-    max > min ? ((valueMin - min) / (max - min)) * 100 : 0
+    STEPS > 0 ? (posMin / STEPS) * 100 : 0
   );
   let fillWidth = $derived(
-    max > min ? ((valueMax - valueMin) / (max - min)) * 100 : 100
+    STEPS > 0 ? ((posMax - posMin) / STEPS) * 100 : 100
   );
 
   function handleMinInput(e) {
-    let val = parseInt(e.target.value);
-    if (val > valueMax) val = valueMax;
-    onChange(val, valueMax);
+    let pos = parseInt(e.target.value);
+    if (pos > posMax) pos = posMax;
+    onChange(posToPrice(pos), valueMax);
   }
 
   function handleMaxInput(e) {
-    let val = parseInt(e.target.value);
-    if (val < valueMin) val = valueMin;
-    onChange(valueMin, val);
+    let pos = parseInt(e.target.value);
+    if (pos < posMin) pos = posMin;
+    onChange(valueMin, posToPrice(pos));
   }
 </script>
 
@@ -29,16 +52,16 @@
   <div class="range-slider">
     <input
       type="range"
-      {min}
-      {max}
-      value={valueMin}
+      min={0}
+      max={STEPS}
+      value={posMin}
       oninput={handleMinInput}
     />
     <input
       type="range"
-      {min}
-      {max}
-      value={valueMax}
+      min={0}
+      max={STEPS}
+      value={posMax}
       oninput={handleMaxInput}
     />
     <div class="range-track"></div>
@@ -78,7 +101,7 @@
 
   .range-slider {
     position: relative;
-    width: 90px;
+    width: 270px;
     height: 20px;
   }
 

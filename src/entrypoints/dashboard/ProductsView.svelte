@@ -39,10 +39,12 @@
   // Filter + sort products
   let filteredProducts = $derived.by(() => {
     let result = allProducts.filter((product) => {
+      const q = searchQuery.toLowerCase();
       const matchesSearch =
         !searchQuery ||
-        product.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        product.title?.toLowerCase().includes(q) ||
+        product.description?.toLowerCase().includes(q) ||
+        product.site?.toLowerCase().includes(q);
 
       const matchesSite = !siteFilter || product.site === siteFilter;
 
