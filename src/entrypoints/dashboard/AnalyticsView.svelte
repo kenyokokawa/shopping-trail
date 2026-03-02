@@ -199,14 +199,6 @@
       chart.destroy();
     }
 
-    const style = getComputedStyle(document.documentElement);
-    const accent = style.getPropertyValue("--accent").trim() || "#3b82f6";
-    const textSecondary =
-      style.getPropertyValue("--text-secondary").trim() || "#a0a0a0";
-    const borderColor =
-      style.getPropertyValue("--border-color").trim() ||
-      "rgba(255,255,255,0.08)";
-
     chart = new Chart(canvasEl, {
       type: "bar",
       data: {
@@ -214,7 +206,7 @@
         datasets: [
           {
             data: data.values,
-            backgroundColor: accent,
+            backgroundColor: "#3b82f6",
             borderRadius: 4,
             maxBarThickness: 40,
           },
@@ -238,14 +230,14 @@
         },
         scales: {
           x: {
-            grid: { color: borderColor },
-            ticks: { color: textSecondary, font: { size: 11 } },
+            grid: { color: "rgba(128,128,128,0.15)" },
+            ticks: { color: "#a0a0a0", font: { size: 11 } },
           },
           y: {
             beginAtZero: true,
-            grid: { color: borderColor },
+            grid: { color: "rgba(128,128,128,0.15)" },
             ticks: {
-              color: textSecondary,
+              color: "#a0a0a0",
               font: { size: 11 },
               stepSize: 1,
               callback: (v) => (Number.isInteger(v) ? v : ""),
@@ -264,7 +256,7 @@
   });
 
   function getCellColor(count) {
-    if (count === 0) return "var(--bg-elevated)";
+    if (count === 0) return "var(--muted)";
     const intensity = Math.min(count / maxCount, 1);
     const alpha = 0.25 + intensity * 0.75;
     return `rgba(59, 130, 246, ${alpha})`;
@@ -413,9 +405,9 @@
     flex: 1;
     min-height: 0;
     position: relative;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     overflow: hidden;
   }
 
@@ -428,7 +420,7 @@
   }
 
   .heatmap-container:hover {
-    scrollbar-color: var(--text-muted) transparent;
+    scrollbar-color: var(--muted-foreground) transparent;
   }
 
   .heatmap-container::-webkit-scrollbar {
@@ -445,7 +437,7 @@
   }
 
   .heatmap-container:hover::-webkit-scrollbar-thumb {
-    background: var(--text-muted);
+    background: var(--muted-foreground);
   }
 
   .heatmap-fade {
@@ -454,8 +446,8 @@
     left: 0;
     right: 0;
     height: 40px;
-    background: linear-gradient(to bottom, transparent, var(--bg-card));
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    background: linear-gradient(to bottom, transparent, var(--card));
+    border-radius: 0 0 var(--radius) var(--radius);
     pointer-events: none;
   }
 
@@ -465,7 +457,7 @@
   }
 
   .heatmap-label {
-    fill: var(--text-muted);
+    fill: var(--muted-foreground);
     font-size: 12px;
     font-family: inherit;
   }
@@ -479,21 +471,21 @@
   }
 
   .heatmap-cell {
-    transition: opacity var(--transition-fast);
+    transition: opacity 0.15s ease;
     cursor: default;
   }
 
   .heatmap-cell:hover {
     opacity: 0.8;
-    stroke: var(--text-secondary);
+    stroke: var(--muted-foreground);
     stroke-width: 1;
   }
 
   .heatmap-tooltip {
     position: fixed;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 4px);
     padding: 6px 10px;
     font-size: 0.8rem;
     pointer-events: none;
@@ -501,17 +493,17 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     transform: translateY(-50%);
     white-space: nowrap;
   }
 
   .heatmap-tooltip strong {
-    color: var(--text-primary);
+    color: var(--foreground);
   }
 
   .heatmap-tooltip span {
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
     font-size: 0.75rem;
   }
 
@@ -546,17 +538,17 @@
   .chart-container {
     flex: 1;
     min-height: 0;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     padding: 20px;
   }
 
   .period-selector {
     display: flex;
     gap: 4px;
-    background: var(--bg-elevated);
-    border-radius: var(--radius-md);
+    background: var(--muted);
+    border-radius: calc(var(--radius) - 2px);
     padding: 3px;
   }
 
@@ -564,22 +556,22 @@
     padding: 6px 14px;
     border: none;
     background: none;
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
     font-family: inherit;
     font-size: 0.82rem;
     font-weight: 500;
     cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
+    border-radius: calc(var(--radius) - 4px);
+    transition: all 0.15s ease;
   }
 
   .period-btn:hover {
-    color: var(--text-primary);
+    color: var(--foreground);
   }
 
   .period-btn.active {
-    background: var(--accent);
-    color: #fff;
+    background: var(--primary);
+    color: var(--primary-foreground);
   }
 
   @media (max-width: 900px) {

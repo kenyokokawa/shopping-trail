@@ -1,6 +1,7 @@
 <script>
   import { Grid, html } from "gridjs";
   import "gridjs/dist/theme/mermaid.css";
+  import { Switch } from '$lib/components/ui/switch/index.js';
 
   let debugMode = $state(false);
   let otherStorageKeys = $state([]);
@@ -117,7 +118,7 @@
       data: products,
       sort: true,
       search: true,
-      pagination: { limit: 25 },
+      pagination: { limit: 100 },
       fixedHeader: true,
       resizable: true,
       language: {
@@ -132,22 +133,18 @@
     setupCopyHandler();
   }
 
-  async function toggleDebugMode() {
-    debugMode = !debugMode;
+  async function handleDebugModeChange(checked) {
+    debugMode = checked;
     const data = await chrome.storage.local.get("settings");
     const settings = data.settings || {};
     settings.debugMode = debugMode;
     await chrome.storage.local.set({ settings });
   }
 
-  async function refresh() {
-    await loadAllData();
-  }
 </script>
 
 <header class="content-header">
   <h2>Debug</h2>
-  <button class="btn btn-refresh" onclick={refresh}>Refresh</button>
 </header>
 
 <div class="debug-content">
@@ -161,15 +158,7 @@
           the console
         </p>
       </div>
-      <label class="switch">
-        <input
-          id="debug-mode"
-          type="checkbox"
-          checked={debugMode}
-          onchange={toggleDebugMode}
-        />
-        <span class="slider"></span>
-      </label>
+      <Switch checked={debugMode} onCheckedChange={handleDebugModeChange} />
     </div>
   </section>
 
@@ -205,35 +194,15 @@
     letter-spacing: -0.02em;
   }
 
-  .btn {
-    padding: 4px 6px;
-    border-radius: var(--radius-md);
-    font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    border: 1px solid var(--border-color);
-  }
-
-  .btn-refresh {
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
-  }
-
-  .btn-refresh:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-  }
-
   .debug-content {
     max-width: 100%;
+    overflow: hidden;
   }
 
   .debug-section {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     padding: 24px;
     margin-bottom: 20px;
   }
@@ -244,85 +213,16 @@
     margin-bottom: 12px;
   }
 
-  .setting-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 0 0;
-    gap: 16px;
-  }
-
-  .setting-info {
-    flex: 1;
-  }
-
-  .setting-info label {
-    font-weight: 500;
-    display: block;
-    margin-bottom: 4px;
-    font-size: 0.9rem;
-  }
-
-  .setting-description {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    line-height: 1.4;
-  }
-
-  /* Toggle Switch (matches SettingsView) */
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-    flex-shrink: 0;
-  }
-
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--bg-elevated);
-    transition: var(--transition-smooth);
-    border-radius: 24px;
-    border: 1px solid var(--border-color);
-  }
-
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 2px;
-    bottom: 2px;
-    background-color: var(--text-muted);
-    transition: var(--transition-smooth);
-    border-radius: 50%;
-  }
-
-  input:checked + .slider {
-    background-color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  input:checked + .slider:before {
-    transform: translateX(20px);
-    background-color: white;
+  .grid-container {
+    overflow-x: auto;
+    margin-right: -24px;
+    padding-right: 24px;
   }
 
   /* Grid.js theme overrides to match extension styling */
   .grid-container :global(.gridjs-wrapper) {
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--border);
   }
 
   .grid-container :global(.gridjs-table) {
@@ -330,9 +230,9 @@
   }
 
   .grid-container :global(.gridjs-thead .gridjs-tr th) {
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
-    border-color: var(--border-color);
+    background: var(--muted);
+    color: var(--muted-foreground);
+    border-color: var(--border);
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
@@ -340,9 +240,9 @@
   }
 
   .grid-container :global(.gridjs-tbody .gridjs-tr td) {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border-color: var(--border-color);
+    background: var(--card);
+    color: var(--foreground);
+    border-color: var(--border);
     white-space: normal;
     word-break: break-all;
     padding: 4px 8px;
@@ -350,39 +250,66 @@
   }
 
   .grid-container :global(.gridjs-tbody .gridjs-tr:hover td) {
-    background: var(--bg-elevated);
+    background: var(--muted);
   }
 
   .grid-container :global(.gridjs-search-input) {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-    border-radius: var(--radius-md);
+    background: var(--muted);
+    color: var(--foreground);
+    border-color: var(--border);
+    border-radius: calc(var(--radius) - 2px);
     font-family: inherit;
     font-size: 0.75rem;
     padding: 6px 10px;
   }
 
-  .grid-container :global(.gridjs-pages button.gridjs-currentPage) {
-    background: var(--accent);
-    color: white;
-  }
-
   .grid-container :global(.gridjs-footer) {
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
-    color: var(--text-muted);
-    padding: 6px 8px;
+    background: var(--card);
+    border-color: transparent;
+    color: var(--muted-foreground);
+    padding: 8px 12px;
+    box-shadow: none;
   }
 
   .grid-container :global(.gridjs-summary) {
-    color: var(--text-muted);
+    color: var(--muted-foreground);
     font-size: 0.7rem;
+  }
+
+  .grid-container :global(.gridjs-pages) {
+    display: flex;
+    gap: 4px;
   }
 
   .grid-container :global(.gridjs-pages button) {
     padding: 4px 10px;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
+    font-family: inherit;
+    background: var(--muted);
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 4px);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .grid-container :global(.gridjs-pages button:hover) {
+    background: var(--border);
+  }
+
+  .grid-container :global(.gridjs-pages button.gridjs-currentPage) {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--primary);
+  }
+
+  .grid-container :global(.gridjs-pages button:disabled) {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .grid-container :global(.gridjs-pages button:disabled:hover) {
+    background: var(--muted);
   }
 
   /* URL cells with action icons */
@@ -413,19 +340,19 @@
     justify-content: center;
     width: 22px;
     height: 22px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border);
     border-radius: 4px;
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
+    background: var(--muted);
+    color: var(--muted-foreground);
     cursor: pointer;
     transition: all 0.15s ease;
     text-decoration: none;
   }
 
   .grid-container :global(.icon-btn:hover) {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--primary);
   }
 
   /* Other storage keys */
@@ -440,20 +367,20 @@
   }
 
   .json-view {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 2px);
     padding: 12px 16px;
     font-family: "SF Mono", "Consolas", "Monaco", monospace;
     font-size: 0.78rem;
     overflow-x: auto;
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
     line-height: 1.5;
     margin: 0;
   }
 
   .empty-message {
-    color: var(--text-muted);
+    color: var(--muted-foreground);
     font-size: 0.85rem;
     padding-top: 8px;
   }

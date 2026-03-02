@@ -1,16 +1,21 @@
 <script>
   import { formatDate, formatFullDate, formatPrice, getHostname } from '@/utils/formatters.js';
+  import { Button } from '$lib/components/ui/button/index.js';
+  import { Badge } from '$lib/components/ui/badge/index.js';
+  import { Checkbox } from '$lib/components/ui/checkbox/index.js';
+  import * as Dialog from '$lib/components/ui/dialog/index.js';
 
   let { product, selected = false, onSelect, onDelete } = $props();
 
-  function handleCheckbox(e) {
-    onSelect(product.id, e.target.checked);
+  let showDeleteDialog = $state(false);
+
+  function handleCheckbox(checked) {
+    onSelect(product.id, checked);
   }
 
-  function handleDelete() {
-    if (confirm('Delete this product?')) {
-      onDelete(product.id);
-    }
+  function confirmDelete() {
+    showDeleteDialog = false;
+    onDelete(product.id);
   }
 
   function handleImageError(e) {
@@ -19,12 +24,9 @@
 </script>
 
 <div class="product-card" class:selected>
-  <input
-    type="checkbox"
-    class="card-checkbox"
-    checked={selected}
-    onchange={handleCheckbox}
-  />
+  <div class="card-checkbox-wrapper">
+    <Checkbox checked={selected} onCheckedChange={handleCheckbox} />
+  </div>
   <div class="card-image-container">
     {#if product.image}
       <img
@@ -36,7 +38,7 @@
     {/if}
   </div>
   <div class="card-content">
-    <span class="card-site">{getHostname(product.url)}</span>
+    <Badge variant="secondary" class="mb-2 text-xs">{getHostname(product.url)}</Badge>
     <h3 class="card-title">
       <a href={product.url} target="_blank" title={product.title}>
         {product.title}
@@ -54,25 +56,40 @@
           {formatDate(product.savedAt)}
         </span>
       </div>
-      <div class="card-actions">
-        <a href={product.url} target="_blank" class="card-btn card-btn-link">
+      <div class="flex gap-1.5">
+        <Button size="sm" href={product.url} target="_blank">
           View
-        </a>
-        <button class="card-btn card-btn-delete" onclick={handleDelete}>
+        </Button>
+        <Button variant="outline" size="sm" onclick={() => showDeleteDialog = true}>
           Delete
-        </button>
+        </Button>
       </div>
     </div>
   </div>
 </div>
 
+<Dialog.Root bind:open={showDeleteDialog}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Delete Product</Dialog.Title>
+      <Dialog.Description>
+        Are you sure you want to delete this product?
+      </Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Button variant="outline" onclick={() => showDeleteDialog = false}>Cancel</Button>
+      <Button variant="destructive" onclick={confirmDelete}>Delete</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+
 <style>
   .product-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     overflow: hidden;
-    transition: all var(--transition-smooth);
+    transition: all 0.25s ease;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -80,36 +97,32 @@
   }
 
   .product-card:hover {
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
 
   .product-card.selected {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
   }
 
-  .card-checkbox {
+  .card-checkbox-wrapper {
     position: absolute;
     top: 12px;
     left: 12px;
     z-index: 10;
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
     opacity: 0;
-    transition: opacity var(--transition-fast);
-    accent-color: var(--accent);
+    transition: opacity 0.15s ease;
   }
 
-  .product-card:hover .card-checkbox,
-  .product-card.selected .card-checkbox {
+  .product-card:hover .card-checkbox-wrapper,
+  .product-card.selected .card-checkbox-wrapper {
     opacity: 1;
   }
 
   .card-image-container {
     width: 100%;
     aspect-ratio: 1;
-    background: #ffffff;
+    background: white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -120,7 +133,7 @@
     max-width: 85%;
     max-height: 85%;
     object-fit: contain;
-    transition: transform var(--transition-smooth);
+    transition: transform 0.25s ease;
   }
 
   .product-card:hover .card-image {
@@ -132,13 +145,6 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-  }
-
-  .card-site {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--accent);
-    margin-bottom: 8px;
   }
 
   .card-title {
@@ -153,18 +159,18 @@
   }
 
   .card-title a {
-    color: var(--text-primary);
+    color: var(--foreground);
     text-decoration: none;
-    transition: color var(--transition-fast);
+    transition: color 0.15s ease;
   }
 
   .card-title a:hover {
-    color: var(--accent);
+    color: var(--primary);
   }
 
   .card-description {
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
     line-height: 1.5;
     margin-bottom: 12px;
     display: -webkit-box;
@@ -183,51 +189,13 @@
   .card-price {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--foreground);
   }
 
   .card-date {
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: var(--muted-foreground);
     margin-left: 8px;
-  }
-
-  .card-actions {
-    display: flex;
-    gap: 6px;
-  }
-
-  .card-btn {
-    padding: 7px 12px;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-family: inherit;
-    font-size: 0.75rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-  }
-
-  .card-btn-link {
-    background: var(--accent);
-    color: white;
-    text-decoration: none;
-  }
-
-  .card-btn-link:hover {
-    background: var(--accent-hover);
-  }
-
-  .card-btn-delete {
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-  }
-
-  .card-btn-delete:hover {
-    background: #dc3545;
-    border-color: #dc3545;
-    color: white;
   }
 
   @keyframes fadeIn {

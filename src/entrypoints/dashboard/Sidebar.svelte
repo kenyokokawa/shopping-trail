@@ -126,9 +126,9 @@
 
 <style>
   .sidebar {
-    width: var(--sidebar-width);
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
+    width: 240px;
+    background: var(--card);
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -138,7 +138,7 @@
 
   .sidebar-header {
     padding: 24px 20px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -169,13 +169,13 @@
     padding: 12px 14px;
     border: none;
     background: none;
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
     font-family: inherit;
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
+    border-radius: calc(var(--radius) - 2px);
+    transition: all 0.15s ease;
   }
 
   .nav-item :global(svg) {
@@ -183,8 +183,8 @@
   }
 
   .nav-item:hover {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
+    background: var(--muted);
+    color: var(--foreground);
   }
 
   .nav-item:hover :global(svg) {
@@ -192,18 +192,18 @@
   }
 
   .nav-item.active {
-    background: var(--accent-soft);
-    color: var(--accent);
+    background: color-mix(in oklch, var(--primary) 15%, transparent);
+    color: var(--primary);
   }
 
   .nav-item.active :global(svg) {
     opacity: 1;
-    color: var(--accent);
+    color: var(--primary);
   }
 
   .sidebar-footer {
     padding: 16px 20px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border);
   }
 
   @media (max-width: 900px) {
@@ -212,7 +212,7 @@
       height: auto;
       position: relative;
       border-right: none;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border);
     }
 
     .sidebar-header {

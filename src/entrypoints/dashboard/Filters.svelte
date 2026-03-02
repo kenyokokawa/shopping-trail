@@ -1,7 +1,17 @@
 <script>
   import { capitalize } from '@/utils/formatters.js';
+  import * as Select from '$lib/components/ui/select/index.js';
 
-  let { sites = [], siteFilter = '', sortBy = 'date-desc', onSiteChange, onSortChange, children } = $props();
+  let { sites = [], siteFilter = '', sortBy = $bindable('date-desc'), onSiteChange, onSortChange, children } = $props();
+
+  const sortLabels = {
+    'date-desc': 'Newest First',
+    'date-asc': 'Oldest First',
+    'price-desc': 'Price: High to Low',
+    'price-asc': 'Price: Low to High',
+    'name-asc': 'Name: A to Z',
+    'name-desc': 'Name: Z to A',
+  };
 
   let siteSearchQuery = $state('');
   let siteDropdownOpen = $state(false);
@@ -92,14 +102,19 @@
 
   {@render children()}
 
-  <select value={sortBy} onchange={(e) => onSortChange(e.target.value)}>
-    <option value="date-desc">Newest First</option>
-    <option value="date-asc">Oldest First</option>
-    <option value="price-desc">Price: High to Low</option>
-    <option value="price-asc">Price: Low to High</option>
-    <option value="name-asc">Name: A to Z</option>
-    <option value="name-desc">Name: Z to A</option>
-  </select>
+  <Select.Root type="single" bind:value={sortBy} onValueChange={onSortChange}>
+    <Select.Trigger class="w-[170px]">
+      <span data-slot="select-value">{sortLabels[sortBy] || 'Sort by'}</span>
+    </Select.Trigger>
+    <Select.Content>
+      <Select.Item value="date-desc" label="Newest First" />
+      <Select.Item value="date-asc" label="Oldest First" />
+      <Select.Item value="price-desc" label="Price: High to Low" />
+      <Select.Item value="price-asc" label="Price: Low to High" />
+      <Select.Item value="name-asc" label="Name: A to Z" />
+      <Select.Item value="name-desc" label="Name: Z to A" />
+    </Select.Content>
+  </Select.Root>
 </div>
 
 <style>
@@ -107,34 +122,6 @@
     display: flex;
     gap: 10px;
     align-items: center;
-  }
-
-  .filters select {
-    padding: 10px 14px;
-    padding-right: 32px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-  }
-
-  .filters select:hover {
-    border-color: var(--text-muted);
-  }
-
-  .filters select:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
   .site-filter {
@@ -146,24 +133,24 @@
     align-items: center;
     gap: 8px;
     padding: 10px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 2px);
+    background: var(--card);
+    color: var(--foreground);
     font-family: inherit;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.15s ease;
     white-space: nowrap;
   }
 
   .site-filter-button:hover {
-    border-color: var(--text-muted);
+    border-color: var(--muted-foreground);
   }
 
   .site-filter-button svg {
-    color: var(--text-muted);
+    color: var(--muted-foreground);
     flex-shrink: 0;
   }
 
@@ -172,9 +159,9 @@
     top: calc(100% + 4px);
     left: 0;
     min-width: 200px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     z-index: 100;
     overflow: hidden;
@@ -184,9 +171,9 @@
     width: 100%;
     padding: 10px 12px;
     border: none;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
     font-family: inherit;
     font-size: 0.85rem;
     outline: none;
@@ -194,7 +181,7 @@
   }
 
   .site-search-input::placeholder {
-    color: var(--text-muted);
+    color: var(--muted-foreground);
   }
 
   .site-options {
@@ -209,26 +196,26 @@
     padding: 8px 12px;
     border: none;
     background: none;
-    color: var(--text-primary);
+    color: var(--foreground);
     font-family: inherit;
     font-size: 0.85rem;
     text-align: left;
     cursor: pointer;
-    transition: background var(--transition-fast);
+    transition: background 0.15s ease;
   }
 
   .site-option:hover {
-    background: var(--bg-elevated);
+    background: var(--muted);
   }
 
   .site-option.active {
-    color: var(--accent);
+    color: var(--primary);
     font-weight: 600;
   }
 
   .site-option-empty {
     padding: 8px 12px;
-    color: var(--text-muted);
+    color: var(--muted-foreground);
     font-size: 0.85rem;
     font-style: italic;
   }
@@ -236,11 +223,6 @@
   @media (max-width: 900px) {
     .filters {
       flex-wrap: wrap;
-    }
-
-    .filters select {
-      flex: 1;
-      min-width: 110px;
     }
 
     .site-filter {

@@ -6,35 +6,9 @@
   );
 </script>
 
-<div class="storage-info">
-  <div class="storage-bar">
-    <div class="storage-fill" style:width="{percent}%"></div>
+<div class="text-center">
+  <div class="h-1 rounded-sm overflow-hidden mb-2 bg-muted">
+    <div class="h-full rounded-sm bg-primary transition-all duration-300 ease-out" style:width="{percent}%"></div>
   </div>
-  <span class="storage-text">{storageInfo.formattedSize} used</span>
+  <span class="text-xs text-muted-foreground">{storageInfo.formattedSize} used</span>
 </div>
-
-<style>
-  .storage-info {
-    text-align: center;
-  }
-
-  .storage-bar {
-    height: 4px;
-    background: var(--bg-elevated);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 8px;
-  }
-
-  .storage-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: width var(--transition-smooth);
-  }
-
-  .storage-text {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-  }
-</style>

@@ -79,20 +79,20 @@
     align-items: center;
     gap: 10px;
     padding: 8px 12px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 2px);
   }
 
   .price-filter-label {
     font-size: 0.8rem;
-    color: var(--text-muted);
+    color: var(--muted-foreground);
     font-weight: 500;
   }
 
   .price-filter-values {
     font-size: 0.8rem;
-    color: var(--text-primary);
+    color: var(--foreground);
     font-weight: 500;
     white-space: nowrap;
     min-width: 80px;
@@ -124,10 +124,10 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--primary);
     cursor: pointer;
     pointer-events: auto;
-    border: 2px solid var(--bg-primary);
+    border: 2px solid var(--background);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
@@ -135,10 +135,10 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--primary);
     cursor: pointer;
     pointer-events: auto;
-    border: 2px solid var(--bg-primary);
+    border: 2px solid var(--background);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
@@ -148,7 +148,7 @@
     height: 4px;
     top: 50%;
     transform: translateY(-50%);
-    background: var(--bg-elevated);
+    background: var(--muted);
     border-radius: 2px;
     z-index: 0;
   }
@@ -158,7 +158,7 @@
     height: 4px;
     top: 50%;
     transform: translateY(-50%);
-    background: var(--accent);
+    background: var(--primary);
     border-radius: 2px;
     z-index: 1;
   }

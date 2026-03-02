@@ -83,9 +83,11 @@
 
   .main-content {
     flex: 1;
-    margin-left: var(--sidebar-width);
+    margin-left: 240px;
     min-height: 100vh;
-    background: var(--bg-primary);
+    min-width: 0;
+    overflow-x: hidden;
+    background: var(--background);
     padding: 28px 32px;
   }
 

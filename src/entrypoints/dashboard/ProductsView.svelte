@@ -5,6 +5,8 @@
   import Filters from './Filters.svelte';
   import PriceRangeSlider from './PriceRangeSlider.svelte';
   import ProductCard from './ProductCard.svelte';
+  import { Button } from '$lib/components/ui/button/index.js';
+  import * as Dialog from '$lib/components/ui/dialog/index.js';
 
   let { allProducts = [], onDataChanged } = $props();
 
@@ -14,6 +16,7 @@
   let priceMin = $state(0);
   let priceMax = $state(1000);
   let selectedProducts = $state(new Set());
+  let showDeleteSelectedDialog = $state(false);
 
   // Compute price range from all products
   let priceRange = $derived.by(() => {
@@ -49,9 +52,10 @@
       const matchesSite = !siteFilter || product.site === siteFilter;
 
       const productPrice = parsePrice(product.price);
+      const priceFilterActive = priceMin > priceRange.min || priceMax < priceRange.max;
       const matchesPrice =
-        productPrice === 0 ||
-        (productPrice >= priceMin && productPrice <= priceMax);
+        !priceFilterActive ||
+        (productPrice > 0 && productPrice >= priceMin && productPrice <= priceMax);
 
       return matchesSearch && matchesSite && matchesPrice;
     });
@@ -120,18 +124,14 @@
     await onDataChanged();
   }
 
-  async function handleDeleteSelected() {
-    if (selectedProducts.size === 0) return;
-    if (
-      confirm(`Delete ${selectedProducts.size} selected product(s)?`)
-    ) {
-      await sendMessage({
-        type: 'DELETE_PRODUCTS',
-        productIds: Array.from(selectedProducts),
-      });
-      selectedProducts = new Set();
-      await onDataChanged();
-    }
+  async function confirmDeleteSelected() {
+    showDeleteSelectedDialog = false;
+    await sendMessage({
+      type: 'DELETE_PRODUCTS',
+      productIds: Array.from(selectedProducts),
+    });
+    selectedProducts = new Set();
+    await onDataChanged();
   }
 </script>
 
@@ -141,7 +141,7 @@
   <Filters
     {sites}
     {siteFilter}
-    {sortBy}
+    bind:sortBy
     onSiteChange={handleSiteChange}
     onSortChange={handleSortChange}
   >
@@ -157,9 +157,9 @@
   <div class="header-actions">
     <span class="product-count">{productCountText()}</span>
     {#if selectedProducts.size > 0}
-      <button class="btn btn-danger" onclick={handleDeleteSelected}>
+      <Button variant="destructive" onclick={() => showDeleteSelectedDialog = true}>
         Delete Selected ({selectedProducts.size})
-      </button>
+      </Button>
     {/if}
   </div>
 </header>
@@ -198,6 +198,21 @@
   {/if}
 </div>
 
+<Dialog.Root bind:open={showDeleteSelectedDialog}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Delete Selected Products</Dialog.Title>
+      <Dialog.Description>
+        Are you sure you want to delete {selectedProducts.size} selected product{selectedProducts.size !== 1 ? 's' : ''}?
+      </Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Button variant="outline" onclick={() => showDeleteSelectedDialog = false}>Cancel</Button>
+      <Button variant="destructive" onclick={confirmDeleteSelected}>Delete</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+
 <style>
   .content-header {
     display: flex;
@@ -215,28 +230,8 @@
   }
 
   .product-count {
-    color: var(--text-muted);
+    color: var(--muted-foreground);
     font-size: 0.85rem;
-  }
-
-  .btn {
-    padding: 10px 18px;
-    border-radius: var(--radius-md);
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    border: none;
-  }
-
-  .btn-danger {
-    background: #dc3545;
-    color: white;
-  }
-
-  .btn-danger:hover {
-    background: #c82333;
   }
 
   .products-grid {
@@ -249,17 +244,17 @@
     grid-column: 1 / -1;
     text-align: center;
     padding: 80px 20px;
-    color: var(--text-muted);
+    color: var(--muted-foreground);
   }
 
   .empty-state :global(svg) {
-    margin-bottom: 16px;
+    margin: 0 auto 16px;
     opacity: 0.4;
   }
 
   .empty-state h3 {
     font-size: 1.1rem;
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
     margin-bottom: 8px;
     font-weight: 500;
   }

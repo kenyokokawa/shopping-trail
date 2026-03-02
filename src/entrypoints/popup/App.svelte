@@ -1,5 +1,7 @@
 <script>
   import { sendMessage } from '@/utils/messaging.js';
+  import { Button } from '$lib/components/ui/button/index.js';
+  import { Switch } from '$lib/components/ui/switch/index.js';
 
   let products = $state([]);
   let trackingEnabled = $state(true);
@@ -23,13 +25,12 @@
     trackingEnabled = settings.trackingEnabled;
   }
 
-  async function toggleTracking() {
-    const newState = !trackingEnabled;
+  async function handleTrackingChange(checked) {
+    trackingEnabled = checked;
     await sendMessage({
       type: 'UPDATE_SETTINGS',
-      settings: { trackingEnabled: newState },
+      settings: { trackingEnabled: checked },
     });
-    trackingEnabled = newState;
   }
 
   function openDashboard() {
@@ -66,14 +67,7 @@
     <h1>Product History</h1>
     <div class="tracking-toggle">
       <span class="tracking-label">Track history</span>
-      <button
-        class="toggle-btn"
-        class:active={trackingEnabled}
-        title="Toggle tracking"
-        onclick={toggleTracking}
-      >
-        <span class="toggle-icon"></span>
-      </button>
+      <Switch checked={trackingEnabled} onCheckedChange={handleTrackingChange} />
     </div>
   </header>
 
@@ -132,10 +126,8 @@
   </section>
 
   <div class="actions">
-    <button class="btn btn-primary" onclick={openDashboard}
-      >View All Products</button
-    >
-    <button class="btn btn-secondary" onclick={openSettings}>Settings</button>
+    <Button class="flex-1" onclick={openDashboard}>View All Products</Button>
+    <Button variant="outline" class="flex-1" onclick={openSettings}>Settings</Button>
   </div>
 
   <div class="stats-footer">
@@ -144,6 +136,10 @@
 </div>
 
 <style>
+  :global(body) {
+    width: 320px;
+  }
+
   .popup-container {
     padding: 16px;
   }
@@ -160,37 +156,6 @@
     font-weight: 600;
   }
 
-  .toggle-btn {
-    width: 44px;
-    height: 24px;
-    border-radius: 12px;
-    border: none;
-    background: var(--bg-tertiary);
-    cursor: pointer;
-    position: relative;
-    transition: background 0.2s;
-  }
-
-  .toggle-btn.active {
-    background: var(--accent);
-  }
-
-  .toggle-icon {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: white;
-    transition: transform 0.2s;
-    box-shadow: var(--shadow);
-  }
-
-  .toggle-btn.active .toggle-icon {
-    transform: translateX(20px);
-  }
-
   .tracking-toggle {
     display: flex;
     align-items: center;
@@ -199,7 +164,7 @@
 
   .tracking-label {
     font-size: 12px;
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
   }
 
   .recent-section {
@@ -210,7 +175,7 @@
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 8px;
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
   }
 
   .recent-products {
@@ -220,7 +185,7 @@
   }
 
   .empty-message {
-    color: var(--text-muted);
+    color: var(--muted-foreground);
     text-align: center;
     padding: 20px;
     font-size: 13px;
@@ -231,7 +196,7 @@
     align-items: center;
     gap: 10px;
     padding: 8px;
-    background: var(--bg-secondary);
+    background: var(--card);
     border-radius: 8px;
     cursor: pointer;
     transition: background 0.2s;
@@ -241,7 +206,7 @@
   }
 
   .product-item:hover {
-    background: var(--bg-tertiary);
+    background: var(--muted);
   }
 
   .product-delete {
@@ -256,8 +221,8 @@
     height: 24px;
     border: none;
     border-radius: 4px;
-    background: var(--bg-tertiary);
-    color: var(--text-muted);
+    background: var(--muted);
+    color: var(--muted-foreground);
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.2s, background 0.2s, color 0.2s;
@@ -268,7 +233,7 @@
   }
 
   .product-delete:hover {
-    background: var(--danger);
+    background: var(--destructive);
     color: white;
   }
 
@@ -277,7 +242,7 @@
     height: 48px;
     border-radius: 6px;
     object-fit: cover;
-    background: var(--bg-tertiary);
+    background: var(--muted);
   }
 
   .product-info {
@@ -300,12 +265,12 @@
     display: flex;
     gap: 8px;
     font-size: 12px;
-    color: var(--text-secondary);
+    color: var(--muted-foreground);
   }
 
   .product-price {
     font-weight: 600;
-    color: var(--accent);
+    color: var(--primary);
   }
 
   .product-site {
@@ -317,41 +282,12 @@
     gap: 8px;
   }
 
-  .btn {
-    flex: 1;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    color: white;
-  }
-
-  .btn-primary:hover {
-    background: var(--accent-hover);
-  }
-
-  .btn-secondary {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-  }
-
-  .btn-secondary:hover {
-    background: var(--border-color);
-  }
-
   .stats-footer {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border);
     text-align: center;
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--muted-foreground);
   }
 </style>
