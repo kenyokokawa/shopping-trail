@@ -2,6 +2,7 @@
 import {
   saveProduct,
   getProducts,
+  updateProduct,
   deleteProduct,
   deleteProducts,
   clearAllProducts,
@@ -31,6 +32,8 @@ export default defineBackground({
           return getProducts();
         case 'GET_RECENT_PRODUCTS':
           return getRecentProducts(message.limit || 5);
+        case 'UPDATE_PRODUCT':
+          return updateProduct(message.productId, message.updates);
         case 'DELETE_PRODUCT':
           return deleteProduct(message.productId);
         case 'DELETE_PRODUCTS':

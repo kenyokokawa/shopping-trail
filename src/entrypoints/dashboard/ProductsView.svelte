@@ -15,6 +15,7 @@
   let sortBy = $state('date-desc');
   let priceMin = $state(0);
   let priceMax = $state(1000);
+  let favoritesOnly = $state(false);
   let selectedProducts = $state(new Set());
   let showDeleteSelectedDialog = $state(false);
 
@@ -49,6 +50,7 @@
         product.description?.toLowerCase().includes(q) ||
         product.site?.toLowerCase().includes(q);
 
+      const matchesFavorites = !favoritesOnly || product.isFavorite;
       const matchesSite = !siteFilter || product.site === siteFilter;
 
       const productPrice = parsePrice(product.price);
@@ -57,7 +59,7 @@
         !priceFilterActive ||
         (productPrice > 0 && productPrice >= priceMin && productPrice <= priceMax);
 
-      return matchesSearch && matchesSite && matchesPrice;
+      return matchesSearch && matchesFavorites && matchesSite && matchesPrice;
     });
 
     result.sort((a, b) => {
@@ -124,6 +126,11 @@
     await onDataChanged();
   }
 
+  async function handleToggleFavorite(productId, isFavorite) {
+    await sendMessage({ type: 'UPDATE_PRODUCT', productId, updates: { isFavorite } });
+    await onDataChanged();
+  }
+
   async function confirmDeleteSelected() {
     showDeleteSelectedDialog = false;
     await sendMessage({
@@ -155,6 +162,16 @@
   </Filters>
 
   <div class="header-actions">
+    <button
+      class="favorites-toggle"
+      class:active={favoritesOnly}
+      onclick={() => favoritesOnly = !favoritesOnly}
+      title={favoritesOnly ? 'Show all products' : 'Show favorites only'}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill={favoritesOnly ? 'currentColor' : 'none'}>
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+      </svg>
+    </button>
     <span class="product-count">{productCountText()}</span>
     {#if selectedProducts.size > 0}
       <Button variant="destructive" onclick={() => showDeleteSelectedDialog = true}>
@@ -192,6 +209,7 @@
         selected={selectedProducts.has(product.id)}
         onSelect={handleSelect}
         onDelete={handleDelete}
+        onToggleFavorite={handleToggleFavorite}
         style="animation-delay: {Math.min(i * 0.02, 0.16)}s"
       />
     {/each}
@@ -227,6 +245,30 @@
     align-items: center;
     gap: 16px;
     margin-left: auto;
+  }
+
+  .favorites-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--muted-foreground);
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+
+  .favorites-toggle:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+  }
+
+  .favorites-toggle.active {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
   }
 
   .product-count {

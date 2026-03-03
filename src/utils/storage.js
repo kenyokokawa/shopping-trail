@@ -1,8 +1,8 @@
 // Storage utility functions for Product History Tracker
 
 const STORAGE_KEYS = {
-  PRODUCTS: 'products',
-  SETTINGS: 'settings'
+  PRODUCTS: "products",
+  SETTINGS: "settings",
 };
 
 const DEFAULT_SETTINGS = {
@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS = {
 // Debug logging helper - only logs when enabled
 function debugLog(enabled, ...args) {
   if (enabled) {
-    console.log('[PHT Debug]', ...args);
+    console.log("[PHT Debug]", ...args);
   }
 }
 
@@ -29,7 +29,7 @@ function simpleHash(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash;
   }
   return Math.abs(hash).toString(36);
@@ -49,7 +49,9 @@ export async function saveProduct(product) {
   // Queue behind any in-flight save to prevent read-before-write races
   const release = saveLock;
   let resolve;
-  saveLock = new Promise(r => { resolve = r; });
+  saveLock = new Promise((r) => {
+    resolve = r;
+  });
   await release;
 
   try {
@@ -64,22 +66,29 @@ async function _saveProduct(product) {
   const debug = settings.debugMode;
   const products = await getProducts();
 
-  debugLog(debug, 'saveProduct() called with:', { title: product.title, url: product.url, image: product.image });
+  debugLog(debug, "saveProduct() called with:", {
+    title: product.title,
+    url: product.url,
+    image: product.image,
+  });
 
   // Check for duplicate (same title + image within last hour)
   const oneHourAgo = Date.now() - 3600000;
-  const recentProducts = products.filter(p => p.savedAt > oneHourAgo);
-  debugLog(debug, `Checking ${recentProducts.length} recent products (last hour) for duplicates`);
+  const recentProducts = products.filter((p) => p.savedAt > oneHourAgo);
+  debugLog(
+    debug,
+    `Checking ${recentProducts.length} recent products (last hour) for duplicates`,
+  );
 
-  const recentDuplicate = recentProducts.find(p => {
+  const recentDuplicate = recentProducts.find((p) => {
     const titleMatch = p.title && product.title && p.title === product.title;
     const imageMatch = product.image && p.image && p.image === product.image;
-    debugLog(debug, 'Comparing with:', {
+    debugLog(debug, "Comparing with:", {
       existingTitle: p.title,
       incomingTitle: product.title,
       titleMatch,
       existingImage: p.image,
-      incomingImage: product.image || '',
+      incomingImage: product.image || "",
       imageMatch,
       savedAt: new Date(p.savedAt).toISOString(),
     });
@@ -87,27 +96,42 @@ async function _saveProduct(product) {
   });
 
   if (recentDuplicate) {
-    debugLog(debug, 'DUPLICATE detected, skipping save. Matched product id:', recentDuplicate.id);
-    return { success: false, reason: 'duplicate' };
+    debugLog(
+      debug,
+      "DUPLICATE detected, skipping save. Matched product id:",
+      recentDuplicate.id,
+    );
+    return { success: false, reason: "duplicate" };
   }
 
   const newProduct = {
     id: generateProductId(product.url),
     ...product,
-    savedAt: Date.now()
+    savedAt: Date.now(),
   };
 
   products.unshift(newProduct);
   await chrome.storage.local.set({ [STORAGE_KEYS.PRODUCTS]: products });
 
-  debugLog(debug, 'Product SAVED with id:', newProduct.id);
+  debugLog(debug, "Product SAVED with id:", newProduct.id);
   return { success: true, product: newProduct };
+}
+
+// Update a product by ID (merge updates into existing product)
+export async function updateProduct(productId, updates) {
+  console.log("updateProduct() called with:", { productId, updates });
+  const products = await getProducts();
+  const index = products.findIndex((p) => p.id === productId);
+  if (index === -1) return { success: false, reason: "not_found" };
+  products[index] = { ...products[index], ...updates };
+  await chrome.storage.local.set({ [STORAGE_KEYS.PRODUCTS]: products });
+  return { success: true, product: products[index] };
 }
 
 // Delete a product by ID
 export async function deleteProduct(productId) {
   const products = await getProducts();
-  const filtered = products.filter(p => p.id !== productId);
+  const filtered = products.filter((p) => p.id !== productId);
   await chrome.storage.local.set({ [STORAGE_KEYS.PRODUCTS]: filtered });
   return { success: true };
 }
@@ -116,7 +140,7 @@ export async function deleteProduct(productId) {
 export async function deleteProducts(productIds) {
   const products = await getProducts();
   const idSet = new Set(productIds);
-  const filtered = products.filter(p => !idSet.has(p.id));
+  const filtered = products.filter((p) => !idSet.has(p.id));
   await chrome.storage.local.set({ [STORAGE_KEYS.PRODUCTS]: filtered });
   return { success: true, deleted: productIds.length };
 }
@@ -151,8 +175,8 @@ export async function cleanupOldProducts() {
     return { removed: 0 };
   }
 
-  const cutoffTime = Date.now() - (settings.retentionDays * 24 * 60 * 60 * 1000);
-  const filtered = products.filter(p => p.savedAt > cutoffTime);
+  const cutoffTime = Date.now() - settings.retentionDays * 24 * 60 * 60 * 1000;
+  const filtered = products.filter((p) => p.savedAt > cutoffTime);
   const removed = products.length - filtered.length;
 
   if (removed > 0) {
@@ -171,16 +195,16 @@ export async function getStorageUsage() {
     bytesUsed: bytesInUse,
     formattedSize: formatBytes(bytesInUse),
     productCount: products.length,
-    quota: chrome.storage.local.QUOTA_BYTES || 10485760 // 10MB default
+    quota: chrome.storage.local.QUOTA_BYTES || 10485760, // 10MB default
   };
 }
 
 function formatBytes(bytes) {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
 // Get recent products (for popup)
@@ -193,29 +217,30 @@ export async function getRecentProducts(limit = 5) {
 export async function searchProducts(query) {
   const products = await getProducts();
   const lowerQuery = query.toLowerCase();
-  return products.filter(p =>
-    p.title?.toLowerCase().includes(lowerQuery) ||
-    p.description?.toLowerCase().includes(lowerQuery)
+  return products.filter(
+    (p) =>
+      p.title?.toLowerCase().includes(lowerQuery) ||
+      p.description?.toLowerCase().includes(lowerQuery),
   );
 }
 
 // Filter products by site
 export async function getProductsBySite(site) {
   const products = await getProducts();
-  return products.filter(p => p.site === site);
+  return products.filter((p) => p.site === site);
 }
 
 // Get unique sites from saved products
 export async function getUniqueSites() {
   const products = await getProducts();
-  return [...new Set(products.map(p => p.site).filter(Boolean))];
+  return [...new Set(products.map((p) => p.site).filter(Boolean))];
 }
 
 // Import products (merge mode: skip existing IDs)
 export async function importProducts(newProducts) {
   const existing = await getProducts();
-  const idSet = new Set(existing.map(p => p.id));
-  const toAdd = newProducts.filter(p => !idSet.has(p.id));
+  const idSet = new Set(existing.map((p) => p.id));
+  const toAdd = newProducts.filter((p) => !idSet.has(p.id));
   if (toAdd.length > 0) {
     const merged = [...toAdd, ...existing];
     merged.sort((a, b) => b.savedAt - a.savedAt);

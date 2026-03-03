@@ -1,11 +1,22 @@
 <script>
-  import { formatDate, formatFullDate, formatPrice, getHostname } from '@/utils/formatters.js';
-  import { Button } from '$lib/components/ui/button/index.js';
-  import { Badge } from '$lib/components/ui/badge/index.js';
-  import { Checkbox } from '$lib/components/ui/checkbox/index.js';
-  import * as Dialog from '$lib/components/ui/dialog/index.js';
+  import {
+    formatDate,
+    formatFullDate,
+    formatPrice,
+    getHostname,
+  } from "@/utils/formatters.js";
+  import { Button } from "$lib/components/ui/button/index.js";
+  import { Badge } from "$lib/components/ui/badge/index.js";
+  import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+  import * as Dialog from "$lib/components/ui/dialog/index.js";
 
-  let { product, selected = false, onSelect, onDelete } = $props();
+  let {
+    product,
+    selected = false,
+    onSelect,
+    onDelete,
+    onToggleFavorite,
+  } = $props();
 
   let showDeleteDialog = $state(false);
 
@@ -19,7 +30,7 @@
   }
 
   function handleImageError(e) {
-    e.target.style.display = 'none';
+    e.target.style.display = "none";
   }
 </script>
 
@@ -27,6 +38,28 @@
   <div class="card-checkbox-wrapper">
     <Checkbox checked={selected} onCheckedChange={handleCheckbox} />
   </div>
+  <button
+    class="card-favorite-btn"
+    class:favorited={product.isFavorite}
+    onclick={(e) => {
+      e.stopPropagation();
+      onToggleFavorite(product.id, !product.isFavorite);
+    }}
+    title={product.isFavorite ? "Remove from favorites" : "Add to favorites"}
+  >
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      fill={product.isFavorite ? "currentColor" : "none"}
+    >
+      <path
+        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+      ></path>
+    </svg>
+  </button>
   <div class="card-image-container">
     {#if product.image}
       <img
@@ -38,7 +71,9 @@
     {/if}
   </div>
   <div class="card-content">
-    <Badge variant="secondary" class="mb-2 text-xs">{getHostname(product.url)}</Badge>
+    <Badge variant="secondary" class="mb-2 text-xs"
+      >{getHostname(product.url)}</Badge
+    >
     <h3 class="card-title">
       <a href={product.url} target="_blank" title={product.title}>
         {product.title}
@@ -57,10 +92,12 @@
         </span>
       </div>
       <div class="flex gap-1.5">
-        <Button size="sm" href={product.url} target="_blank">
-          View
-        </Button>
-        <Button variant="outline" size="sm" onclick={() => showDeleteDialog = true}>
+        <Button size="sm" href={product.url} target="_blank">View</Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => (showDeleteDialog = true)}
+        >
           Delete
         </Button>
       </div>
@@ -77,7 +114,9 @@
       </Dialog.Description>
     </Dialog.Header>
     <Dialog.Footer>
-      <Button variant="outline" onclick={() => showDeleteDialog = false}>Cancel</Button>
+      <Button variant="outline" onclick={() => (showDeleteDialog = false)}
+        >Cancel</Button
+      >
       <Button variant="destructive" onclick={confirmDelete}>Delete</Button>
     </Dialog.Footer>
   </Dialog.Content>
@@ -117,6 +156,39 @@
   .product-card:hover .card-checkbox-wrapper,
   .product-card.selected .card-checkbox-wrapper {
     opacity: 1;
+  }
+
+  .card-favorite-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    opacity: 0;
+    transition:
+      opacity 0.15s ease,
+      color 0.15s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted-foreground);
+    /* padding: 4px; */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-favorite-btn.favorited {
+    opacity: 1;
+    color: #ef4444;
+  }
+
+  .product-card:hover .card-favorite-btn {
+    opacity: 1;
+  }
+
+  .card-favorite-btn:hover {
+    color: #ef4444;
   }
 
   .card-image-container {
